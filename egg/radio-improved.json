@@ -8,15 +8,10 @@
     "name": "Icecast-AutoDJ-Radio-Enhanced",
     "author": "wegj1@hotmail.com",
     "description": "Enhanced Icecast radio streaming server with AutoDJ capabilities. Supports automated playlist streaming with customizable configurations for mount points, bitrates, and stream metadata.",
-    "features": [
-        "auto_dj",
-        "playlist_support",
-        "multiple_mount_points",
-        "web_interface"
-    ],
-    "images": [
-        "ghcr.io/zeropointbruh/icecast-autodj:latest"
-    ],
+    "features": null,
+    "docker_images": {
+        "ghcr.io/zeropointbruh/icecast-autodj": "ghcr.io/zeropointbruh/icecast-autodj:latest"
+    },
     "startup": "bash /home/container/run.sh",
     "config": {
         "files": "{\r\n    \"icecast-autodj/configs/ezstream.v1.xml\": {\r\n        \"parser\": \"xml\",\r\n        \"find\": {\r\n            \"ezstream.servers.server.hostname\": \"127.0.0.1\",\r\n            \"ezstream.servers.server.port\": \"{{server.build.default.port}}\",\r\n            \"ezstream.servers.server.password\": \"{{env.SOURCE_PASSWORD}}\",\r\n            \"ezstream.servers.server.mount\": \"{{env.MOUNT_POINT}}\",\r\n            \"ezstream.streams.stream.format\": \"{{env.STREAM_FORMAT}}\",\r\n            \"ezstream.streams.stream.encoder\": \"{{env.ENCODER}}\",\r\n            \"ezstream.metadata.program\": \"{{env.METADATA_PROGRAM}}\"\r\n        }\r\n    },\r\n    \"icecast.xml\": {\r\n        \"parser\": \"xml\",\r\n        \"find\": {\r\n            \"icecast.limits.clients\": \"{{env.MAX_CLIENTS}}\",\r\n            \"icecast.limits.sources\": \"{{env.MAX_SOURCES}}\",\r\n            \"icecast.authentication.source-password\": \"{{env.SOURCE_PASSWORD}}\",\r\n            \"icecast.authentication.relay-password\": \"{{env.RELAY_PASSWORD}}\",\r\n            \"icecast.authentication.admin-user\": \"{{env.ADMIN_USER}}\",\r\n            \"icecast.authentication.admin-password\": \"{{env.ADMIN_PASSWORD}}\",\r\n            \"icecast.listen-socket.port\": \"{{server.build.default.port}}\",\r\n            \"icecast.hostname\": \"{{env.HOSTNAME}}\",\r\n            \"icecast.location\": \"{{env.LOCATION}}\",\r\n            \"icecast.admin\": \"{{env.ADMIN_EMAIL}}\"\r\n        }\r\n    }\r\n}",

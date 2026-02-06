@@ -8,18 +8,9 @@
     "name": "Icecast-AutoDJ-Extreme",
     "author": "wegj1@hotmail.com",
     "description": "Ultra-enhanced Icecast radio streaming server with AutoDJ, multi-playlist support, ads rotation, jingle injection, and advanced features. Created by @zeropointbruh (wegj1@hotmail.com) - https://banabyte.com. Compatible with both Pterodactyl and Pelican Panel.",
-    "features": [
-        "auto_dj",
-        "multi_playlist",
-        "ads_rotation",
-        "jingle_injection",
-        "advanced_scheduling",
-        "format_auto_detection",
-        "process_monitoring",
-        "web_interface"
-    ],
+    "features": null,
     "docker_images": {
-        "ghcr.io/zeropointbruh/icecast-autodj:latest": "ghcr.io/zeropointbruh/icecast-autodj:latest"
+        "ghcr.io/zeropointbruh/icecast-autodj": "ghcr.io/zeropointbruh/icecast-autodj:latest"
     },
     "file_denylist": [],
     "startup": "bash /home/container/run.sh",
