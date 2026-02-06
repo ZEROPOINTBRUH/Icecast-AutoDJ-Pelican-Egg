@@ -13,6 +13,8 @@
         <streams>
                 <stream>
                         <mountpoint>/autodj</mountpoint>
+                        <format>MP3</format>
+                        <encoder>MP3-128</encoder>
                         <public>0</public>
                         <stream_name>AutoDJ Radio</stream_name>
                         <stream_url>http://localhost:8000/autodj</stream_url>
@@ -29,4 +31,27 @@
                         <stream_once>0</stream_once>
                 </intake>
         </intakes>
+
+        <decoders>
+                <decoder>
+                        <name>FFMPEG-Universal</name>
+                        <program>ffmpeg -i @T@ -f wav -acodec pcm_s16le -ar 44100 -ac 2 -</program>
+                        <file_ext>.mp3</file_ext>
+                        <file_ext>.m4a</file_ext>
+                        <file_ext>.aac</file_ext>
+                        <file_ext>.ogg</file_ext>
+                        <file_ext>.flac</file_ext>
+                        <file_ext>.opus</file_ext>
+                        <file_ext>.wav</file_ext>
+                        <file_ext>.wma</file_ext>
+                </decoder>
+        </decoders>
+
+        <encoders>
+                <encoder>
+                        <name>MP3-128</name>
+                        <format>MP3</format>
+                        <program>lame --preset cbr 128 -r -s 44.1 --bitwidth 16 - -</program>
+                </encoder>
+        </encoders>
 </ezstream>
