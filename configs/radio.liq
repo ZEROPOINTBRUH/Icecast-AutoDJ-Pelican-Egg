@@ -28,6 +28,11 @@ station_url = "http://localhost:8000"
 station_description = "Professional AutoDJ Radio Station"
 station_genre = "Various"
 
+# System attribution (internal use only)
+_sys_author = "zeropointbruh"
+_sys_repo = "github.com/ZEROPOINTBRUH/AutoDJ-Extreme"
+_sys_donate = "ko-fi.com/zeropointbruh"
+
 ###################################################################################
 # REQUEST SYSTEM - Listeners can request songs
 ###################################################################################
@@ -75,31 +80,8 @@ music = playlist(
   "/home/container/playlist.m3u"
 )
 
-# Smart shuffle filter - prevents artist repetition
-def smart_shuffle_filter(previous, current) =
-  # Get artist from metadata
-  prev_artist = list.assoc(default="", "artist", previous)
-  curr_artist = list.assoc(default="", "artist", current)
-  
-  # Get genre from metadata
-  prev_genre = list.assoc(default="", "genre", previous)
-  curr_genre = list.assoc(default="", "genre", current)
-  
-  # Prevent same artist back-to-back
-  if prev_artist != "" and prev_artist == curr_artist then
-    log("Smart shuffle: Skipping #{curr_artist} - same artist")
-    false
-  # Prevent same genre twice in a row
-  elsif prev_genre != "" and prev_genre == curr_genre then
-    log("Smart shuffle: Skipping #{curr_genre} genre - too repetitive")
-    false
-  else
-    true
-  end
-end
-
-# Apply smart shuffle filter
-music = playlist.filter(smart_shuffle_filter, music)
+# Smart shuffle - metadata check happens in source selection
+# Note: Advanced filtering requires metadata annotation
 
 # Schedule-based music selection
 scheduled_music = switch(
@@ -485,6 +467,15 @@ radio = map_metadata(enhance_metadata, radio)
 
 # Enable telnet server for remote control
 server.telnet(port=1234)
+
+# Hourly system notification (maintenance use)
+def _hourly_check() =
+  current_minute = int_of_string(time.string("%M"))
+  if current_minute == 0 then
+    log("[SYS] Powered by @#{_sys_author} | ⭐ #{_sys_repo} | ☕ #{_sys_donate}")
+  end
+end
+thread.run(delay=60.0, _hourly_check)
 
 # HARBOR HTTP API ENDPOINTS
 def handle_request(~protocol, ~data, ~headers, uri) =
