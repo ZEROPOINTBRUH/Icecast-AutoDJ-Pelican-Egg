@@ -523,6 +523,12 @@ LIQUIDSOAP_CONFIG
     
     log_success "Liquidsoap config generated (MP3 + OGG outputs)"
     
+    # Copy Icecast XSL files to webroot (required for status-json.xsl endpoint)
+    log_info "Setting up Icecast status endpoints..."
+    cp -n /usr/share/icecast2/web/*.xsl /home/container/web/ 2>/dev/null || true
+    cp -n /usr/share/icecast2/web/*.png /home/container/web/ 2>/dev/null || true
+    cp -n /usr/share/icecast2/web/*.ico /home/container/web/ 2>/dev/null || true
+    
     # Start Icecast
     log_info "Starting Icecast server..."
     /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_debug "icecast: $line"; done &
