@@ -487,6 +487,11 @@ main() {
     
     # Start Liquidsoap
     log_info "Starting Liquidsoap (advanced audio engine)..."
+    log_debug "Liquidsoap version: $(/usr/bin/liquidsoap --version 2>&1 | head -1)"
+    log_debug "Config file exists: $([ -f /home/container/radio.liq ] && echo 'YES' || echo 'NO')"
+    log_debug "Config file size: $(wc -c < /home/container/radio.liq 2>/dev/null || echo '0') bytes"
+    log_debug "Config file content:"
+    cat /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_debug "  $line"; done
     /usr/bin/liquidsoap /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_debug "liquidsoap: $line"; done &
     LIQUIDSOAP_PID=$!
     
