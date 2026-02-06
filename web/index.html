@@ -56,11 +56,35 @@
                     <button class="btn-icon" id="refreshBtn" title="Refresh">
                         <span>🔄</span>
                     </button>
-                    <button class="btn-icon" title="Notifications">
-                        <span>🔔</span>
+                    <span id="userDisplay" class="hidden user-badge">Admin</span>
+                    <button class="btn-icon" id="loginButton" title="Admin Login">
+                        <span>🔐</span>
+                    </button>
+                    <button class="btn-icon hidden" id="logoutButton" title="Logout">
+                        <span>🚪</span>
                     </button>
                 </div>
             </header>
+
+            <!-- Login Modal -->
+            <div id="loginModal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="close-modal">×</span>
+                    <h2>Admin Login</h2>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="loginUsername" value="admin" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <div id="loginError" class="error-message hidden"></div>
+                        <button type="submit" id="loginBtn" class="btn-primary">Login</button>
+                    </form>
+                </div>
+            </div>
 
             <!-- Dashboard Page -->
             <div class="page-content" id="dashboard-page">
@@ -78,7 +102,7 @@
                             <span id="trackDuration">0:00</span>
                         </div>
                     </div>
-                    <div class="playback-controls">
+                    <div class="playback-controls admin-only hidden">
                         <button class="control-btn" id="prevBtn" title="Previous">⏮️</button>
                         <button class="control-btn primary" id="skipBtn" title="Skip Track">⏭️</button>
                         <button class="control-btn" id="refreshPlaylistBtn" title="Refresh Playlist">🔄</button>
@@ -179,6 +203,7 @@
         </main>
     </div>
 
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

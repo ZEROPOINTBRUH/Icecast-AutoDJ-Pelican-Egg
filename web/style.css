@@ -494,6 +494,82 @@ body {
     background: var(--accent-primary);
 }
 
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal-content h2 {
+    margin-bottom: 24px;
+    font-size: 24px;
+}
+
+.close-modal {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 32px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.close-modal:hover {
+    color: var(--text-primary);
+    transform: rotate(90deg);
+}
+
+/* User Badge */
+.user-badge {
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: var(--accent-primary);
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* Error Message */
+.error-message {
+    padding: 12px;
+    background: rgba(248, 48, 98, 0.2);
+    border: 1px solid var(--accent-pink);
+    border-radius: 6px;
+    color: var(--accent-pink);
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .app-container {
@@ -516,5 +592,10 @@ body {
     .playback-controls {
         flex-direction: row;
         justify-content: center;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 24px;
     }
 }
