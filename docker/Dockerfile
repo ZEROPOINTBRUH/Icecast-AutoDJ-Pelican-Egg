@@ -6,6 +6,9 @@ LABEL version="2.0"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Create container user (required by Pelican Panel)
+RUN useradd -m -d /home/container -s /bin/bash container
+
 # Install all dependencies
 RUN apt-get update && apt-get install -y \
     icecast2 \
@@ -38,12 +41,12 @@ RUN mkdir -p /home/container \
 # Set working directory
 WORKDIR /home/container
 
-# Set default user
-USER container
-ENV USER=container HOME=/home/container
-
 # Expose Icecast port
 EXPOSE 8000
 
-# Set entrypoint
-ENTRYPOINT ["/bin/bash"]
+# Copy entrypoint script
+COPY --chown=container:container ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Set entrypoint (Pelican Panel compatible)
+ENTRYPOINT ["/entrypoint.sh"]
