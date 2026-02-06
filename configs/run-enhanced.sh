@@ -504,6 +504,11 @@ main() {
     fi
     log_success "Liquidsoap started (PID: $LIQUIDSOAP_PID)"
     
+    # Get server IP and port
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+    [ -z "$SERVER_IP" ] && SERVER_IP="localhost"
+    SERVER_PORT="${SERVER_PORT:-8000}"
+    
     # Success banner
     echo ""
     echo -e "${GREEN}${BOLD}"
@@ -511,13 +516,11 @@ main() {
     print_box_text "RADIO STATION IS LIVE!" 80 "$GREEN$BOLD"
     print_box_line 80 "${BOX_VR}${BOX_VL}"
     print_box_text "" 80
-    print_box_text "MP3 128k:  http://YOUR_IP:PORT/autodj-128.mp3" 80 "$WHITE"
-    print_box_text "MP3 192k:  http://YOUR_IP:PORT/autodj-192.mp3" 80 "$WHITE"
-    print_box_text "OGG Vorbis: http://YOUR_IP:PORT/autodj.ogg" 80 "$WHITE"
-    print_box_text "AAC Stream: http://YOUR_IP:PORT/autodj.aac" 80 "$WHITE"
+    print_box_text "MP3 128k:  http://${SERVER_IP}:${SERVER_PORT}/autodj.mp3" 80 "$WHITE"
+    print_box_text "Web UI:    http://${SERVER_IP}:${SERVER_PORT}/" 80 "$WHITE"
     print_box_text "" 80
-    print_box_text "Admin Panel: http://YOUR_IP:PORT/admin/" 80 "$CYAN"
-    print_box_text "Status Page: http://YOUR_IP:PORT/status.xsl" 80 "$CYAN"
+    print_box_text "Admin Panel: http://${SERVER_IP}:${SERVER_PORT}/admin/" 80 "$CYAN"
+    print_box_text "Requests:    http://${SERVER_IP}:${SERVER_PORT}/request.html" 80 "$CYAN"
     print_box_text "" 80
     print_box_line 80 "${BOX_BL}${BOX_BR}"
     echo -e "${NC}"
