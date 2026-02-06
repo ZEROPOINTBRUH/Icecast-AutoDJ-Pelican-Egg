@@ -12,6 +12,8 @@ RUN useradd -m -d /home/container -s /bin/bash container
 # Install all dependencies
 RUN apt-get update && apt-get install -y \
     icecast2 \
+    liquidsoap \
+    liquidsoap-plugin-all \
     ezstream \
     madplay \
     lame \
@@ -29,14 +31,17 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Create necessary directories
+# Create necessary directories and copy Icecast web files
 RUN mkdir -p /home/container \
     && mkdir -p /home/container/music \
     && mkdir -p /home/container/ads \
     && mkdir -p /home/container/jingles \
     && mkdir -p /home/container/playlists \
     && mkdir -p /home/container/log \
-    && mkdir -p /etc/ezstream
+    && mkdir -p /home/container/web \
+    && mkdir -p /etc/ezstream \
+    && cp -r /usr/share/icecast2/web/* /home/container/web/ \
+    && chown -R container:container /home/container/web
 
 # Set working directory
 WORKDIR /home/container

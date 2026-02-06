@@ -213,14 +213,14 @@
 
     <paths>
         <!-- basedir is only used if chroot is enabled -->
-        <basedir>/usr/share/icecast2</basedir>
+        <basedir>/home/container</basedir>
 
         <!-- Note that if <chroot> is turned on below, these paths must both
              be relative to the new root, not the original root -->
         <logdir>/home/container/log</logdir>
-        <webroot>/usr/share/icecast2/web</webroot>
-        <adminroot>/usr/share/icecast2/admin</adminroot>
-        <!-- <pidfile>/usr/share/icecast2/icecast.pid</pidfile> -->
+        <webroot>/home/container/web</webroot>
+        <adminroot>/home/container/web</adminroot>
+        <!-- <pidfile>/home/container/icecast.pid</pidfile> -->
 
         <!-- Aliases: treat requests for 'source' path as being for 'dest' path
              May be made specific to a port or bound address using the "port"
