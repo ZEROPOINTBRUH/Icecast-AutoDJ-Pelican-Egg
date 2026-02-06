@@ -35,7 +35,7 @@
 
     <authentication>
         <!-- Sources log in with username 'source' -->
-        <source-password>sourcepassword</source-password>
+        <source-password>autodjpassword123</source-password>
         <!-- Relays log in with username 'relay' -->
         <relay-password>relaypassword</relay-password>
 
