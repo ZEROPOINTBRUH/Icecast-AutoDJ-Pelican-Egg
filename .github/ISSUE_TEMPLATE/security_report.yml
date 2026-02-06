@@ -1,0 +1,140 @@
+name: 🔒 Security Report
+description: Report a security vulnerability (PRIVATE - will be handled confidentially)
+title: "[Security]: "
+labels: ["security", "critical"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ Security Issue Reporting
+        
+        **IMPORTANT:** For serious security vulnerabilities, please email directly to:
+        📧 **wegj1@hotmail.com**
+        
+        Use this form ONLY for non-critical security concerns.
+        Critical issues should be reported privately via email.
+
+  - type: checkboxes
+    id: severity
+    attributes:
+      label: Severity Assessment
+      description: How severe is this security issue?
+      options:
+        - label: Critical - Immediate action required (report via EMAIL instead)
+        - label: High - Significant security risk
+        - label: Medium - Moderate security concern
+        - label: Low - Minor security improvement
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Vulnerability Type
+      options:
+        - Authentication/Authorization
+        - Code Injection
+        - Credential Exposure
+        - Cross-Site Scripting (XSS)
+        - Default Passwords
+        - Denial of Service
+        - Information Disclosure
+        - Insecure Configuration
+        - Path Traversal
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Describe the security issue (DO NOT include exploit code publicly)
+      placeholder: What is the security concern?
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential Impact
+      description: What could an attacker do with this vulnerability?
+      placeholder: |
+        - What data could be accessed?
+        - What actions could be performed?
+        - Who is affected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected Components
+      description: Which parts of the system are affected?
+      placeholder: |
+        - Specific files/scripts
+        - Version numbers
+        - Configuration areas
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can this be demonstrated? (Be responsible - don't include full exploits)
+      placeholder: |
+        High-level steps only:
+        1. Access...
+        2. Observe...
+        (Do not include exploit code)
+    validations:
+      required: false
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Fix
+      description: If you have ideas on how to fix this, please share
+      placeholder: Potential solutions or mitigations...
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: CVE numbers, security advisories, or related information
+      placeholder: Links to relevant security resources...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Responsible Disclosure
+      description: Please confirm you agree to responsible disclosure
+      options:
+        - label: I will not publicly disclose this vulnerability until a fix is released
+          required: true
+        - label: I have not shared this vulnerability with others
+          required: true
+        - label: I will cooperate with the maintainers to resolve this issue
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ## What Happens Next?
+        
+        1. **Acknowledgment** - We'll confirm receipt within 48 hours
+        2. **Assessment** - We'll evaluate severity and impact
+        3. **Fix Development** - We'll work on a patch
+        4. **Testing** - Thorough testing of the fix
+        5. **Release** - Coordinated disclosure and patch release
+        6. **Credit** - You'll be credited (if desired) in release notes
+        
+        Thank you for helping keep AutoDJ-Extreme secure!

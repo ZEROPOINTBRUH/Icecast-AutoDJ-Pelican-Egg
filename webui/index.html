@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Station - Live Stream</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation"></div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-broadcast-tower"></i>
+                <h1 id="stationName">Radio Station</h1>
+            </div>
+            <div class="tagline" id="stationTagline">Live 24/7 Music Stream</div>
+        </header>
+
+        <!-- Main Player Card -->
+        <div class="player-card">
+            <!-- Album Art / Visualizer -->
+            <div class="album-art">
+                <div class="visualizer">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+                <div class="playing-icon">
+                    <i class="fas fa-music"></i>
+                </div>
+            </div>
+
+            <!-- Now Playing Info -->
+            <div class="now-playing">
+                <div class="track-info">
+                    <h2 id="currentTrack">Loading...</h2>
+                    <p id="currentArtist">Connecting to stream...</p>
+                </div>
+                <div class="stream-info">
+                    <span class="badge live-badge">
+                        <i class="fas fa-circle pulse"></i> LIVE
+                    </span>
+                    <span class="badge listeners">
+                        <i class="fas fa-users"></i> <span id="listeners">0</span> listeners
+                    </span>
+                </div>
+            </div>
+
+            <!-- Player Controls -->
+            <div class="player-controls">
+                <button class="control-btn" id="playBtn">
+                    <i class="fas fa-play"></i>
+                </button>
+                <div class="volume-control">
+                    <i class="fas fa-volume-up"></i>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="70">
+                    <span id="volumeValue">70%</span>
+                </div>
+            </div>
+
+            <!-- Audio Element -->
+            <audio id="audioPlayer" preload="none"></audio>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-signal"></i>
+                <div class="stat-value" id="bitrate">128 kbps</div>
+                <div class="stat-label">Quality</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-music"></i>
+                <div class="stat-value" id="format">MP3</div>
+                <div class="stat-label">Format</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <div class="stat-value" id="uptime">Live</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-headphones"></i>
+                <div class="stat-value" id="totalListeners">0</div>
+                <div class="stat-label">Total Today</div>
+            </div>
+        </div>
+
+        <!-- Stream Links -->
+        <div class="stream-links">
+            <h3>Listen On Your Device</h3>
+            <div class="links-grid">
+                <a href="#" class="link-btn" id="m3uLink">
+                    <i class="fas fa-download"></i>
+                    Download M3U
+                </a>
+                <a href="#" class="link-btn" id="plsLink">
+                    <i class="fas fa-download"></i>
+                    Download PLS
+                </a>
+                <button class="link-btn" id="copyUrlBtn">
+                    <i class="fas fa-copy"></i>
+                    Copy Stream URL
+                </button>
+                <a href="/admin" class="link-btn admin-btn">
+                    <i class="fas fa-cog"></i>
+                    Admin Panel
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Tracks -->
+        <div class="recent-tracks">
+            <h3>Recently Played</h3>
+            <div id="trackHistory" class="track-list">
+                <div class="track-item">
+                    <i class="fas fa-music"></i>
+                    <span>Loading track history...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>About</h4>
+                    <p id="stationDescription">24/7 music streaming with the best selection.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p id="contactInfo">Email: info@radiostation.com</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Powered By</h4>
+                    <p class="attribution">
+                        Enhanced Icecast AutoDJ<br>
+                        <a href="https://banabyte.com" target="_blank">by @zeropointbruh</a>
+                    </p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Radio Station. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="player.js"></script>
+</body>
+</html>

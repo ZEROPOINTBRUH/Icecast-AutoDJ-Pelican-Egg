@@ -1,0 +1,261 @@
+{
+    "_comment": "Ultra-Enhanced Pterodactyl/Pelican Egg for Icecast AutoDJ Radio Streaming - Created by @zeropointbruh",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-02-05T00:00:00+00:00",
+    "name": "Icecast-AutoDJ-Extreme",
+    "author": "wegj1@hotmail.com",
+    "description": "Ultra-enhanced Icecast radio streaming server with AutoDJ, multi-playlist support, ads rotation, jingle injection, and advanced features. Created by @zeropointbruh (wegj1@hotmail.com) - https://banabyte.com. Compatible with both Pterodactyl and Pelican Panel.",
+    "features": [
+        "auto_dj",
+        "multi_playlist",
+        "ads_rotation",
+        "jingle_injection",
+        "advanced_scheduling",
+        "format_auto_detection",
+        "process_monitoring",
+        "web_interface"
+    ],
+    "docker_images": {
+        "ghcr.io/zeropointbruh/icecast-autodj:latest": "ghcr.io/zeropointbruh/icecast-autodj:latest"
+    },
+    "file_denylist": [],
+    "startup": "bash /home/container/icecast-autodj/run.sh",
+    "config": {
+        "files": "{\r\n    \"icecast.xml\": {\r\n        \"parser\": \"xml\",\r\n        \"find\": {\r\n            \"icecast.limits.clients\": \"{{env.MAX_CLIENTS}}\",\r\n            \"icecast.limits.sources\": \"{{env.MAX_SOURCES}}\",\r\n            \"icecast.authentication.source-password\": \"{{env.SOURCE_PASSWORD}}\",\r\n            \"icecast.authentication.relay-password\": \"{{env.RELAY_PASSWORD}}\",\r\n            \"icecast.authentication.admin-user\": \"{{env.ADMIN_USER}}\",\r\n            \"icecast.authentication.admin-password\": \"{{env.ADMIN_PASSWORD}}\",\r\n            \"icecast.listen-socket.port\": \"{{server.build.default.port}}\",\r\n            \"icecast.hostname\": \"{{env.HOSTNAME}}\",\r\n            \"icecast.location\": \"{{env.LOCATION}}\",\r\n            \"icecast.admin\": \"{{env.ADMIN_EMAIL}}\",\r\n            \"icecast.mount[0].password\": \"{{env.AUTODJ_PASSWORD}}\",\r\n            \"icecast.mount[1].password\": \"{{env.LIVE_PASSWORD}}\"\r\n        }\r\n    },\r\n    \"ezstream.xml\": {\r\n        \"parser\": \"xml\",\r\n        \"find\": {\r\n            \"ezstream.servers.server.hostname\": \"127.0.0.1\",\r\n            \"ezstream.servers.server.port\": \"{{server.build.default.port}}\",\r\n            \"ezstream.servers.server.password\": \"{{env.AUTODJ_PASSWORD}}\",\r\n            \"ezstream.streams.stream.mountpoint\": \"{{env.MOUNT_POINT}}\",\r\n            \"ezstream.streams.stream.format\": \"{{env.STREAM_FORMAT}}\",\r\n            \"ezstream.streams.stream.stream_name\": \"{{env.STATION_NAME}}\",\r\n            \"ezstream.streams.stream.stream_genre\": \"{{env.STATION_GENRE}}\",\r\n            \"ezstream.streams.stream.stream_description\": \"{{env.STATION_DESCRIPTION}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Enhanced AutoDJ is now LIVE!\"\r\n}",
+        "logs": "{}",
+        "stop": "^^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n\n###################################################################################\n# Ultra-Enhanced Installation Script for Icecast AutoDJ Radio\n# Created by: @zeropointbruh (wegj1@hotmail.com)\n# Website: https://banabyte.com\n# \n# Features:\n# - Interactive setup with feature prompts\n# - Multi-playlist support configuration\n# - Ads and jingles folder creation\n# - Comprehensive error handling and validation\n# - Self-healing installation with fallbacks\n# - Pelican Panel and Pterodactyl compatible\n###################################################################################\n\nset -e\n\nRED='\\033[0;31m'\nGREEN='\\033[0;32m'\nYELLOW='\\033[1;33m'\nBLUE='\\033[0;34m'\nMAGENTA='\\033[0;35m'\nCYAN='\\033[0;36m'\nNC='\\033[0m'\n\nlog_info() {\n    echo -e \"${GREEN}[INFO]${NC} $1\"\n}\n\nlog_warn() {\n    echo -e \"${YELLOW}[WARN]${NC} $1\"\n}\n\nlog_error() {\n    echo -e \"${RED}[ERROR]${NC} $1\"\n}\n\nlog_success() {\n    echo -e \"${CYAN}[SUCCESS]${NC} $1\"\n}\n\nlog_banner() {\n    echo -e \"${MAGENTA}$1${NC}\"\n}\n\ncheck_command() {\n    if ! command -v $1 &> /dev/null; then\n        log_error \"Required command '$1' not found\"\n        return 1\n    fi\n    return 0\n}\n\nlog_banner \"╔═══════════════════════════════════════════════════════════════╗\"\nlog_banner \"║  Ultra-Enhanced Icecast AutoDJ Installation v2.0             ║\"\nlog_banner \"║  Created by: @zeropointbruh                                   ║\"\nlog_banner \"║  Email: wegj1@hotmail.com                                    ║\"\nlog_banner \"║  Website: https://banabyte.com                               ║\"\nlog_banner \"╚═══════════════════════════════════════════════════════════════╝\"\n\nlog_info \"Starting installation process...\"\n\ncd /mnt/server || {\n    log_error \"Failed to access /mnt/server directory\"\n    exit 1\n}\n\nlog_info \"Validating required commands...\"\ncheck_command git || exit 1\ncheck_command chmod || exit 1\ncheck_command mkdir || exit 1\n\nlog_info \"Cleaning up any existing installation...\"\nif [ -d \"icecast-autodj\" ]; then\n    log_warn \"Existing installation found, removing...\"\n    rm -rf icecast-autodj\nfi\n\nlog_info \"Cloning enhanced Icecast AutoDJ repository...\"\nREPO_URL=\"${REPO_URL:-https://github.com/zeropointbruh/icecast-autodj.git}\"\nlog_info \"Repository: $REPO_URL\"\n\nif ! git clone \"$REPO_URL\" icecast-autodj 2>/dev/null; then\n    log_warn \"Primary repository unavailable, trying fallback...\"\n    if ! git clone \"https://github.com/jensjeflensje/icecast-autodj.git\" icecast-autodj; then\n        log_error \"All repository sources failed\"\n        exit 1\n    fi\n    log_success \"Cloned from fallback repository\"\nelse\n    log_success \"Cloned from primary repository\"\nfi\n\ncd icecast-autodj || exit 1\n\nlog_info \"Setting up permissions...\"\nif [ -f \"run.sh\" ]; then\n    chmod +x run.sh\nelse\n    log_warn \"run.sh not found in repository, will use custom script\"\nfi\n\nlog_info \"Configuring Icecast...\"\nif [ -f /etc/icecast2/icecast.xml ]; then\n    mv /etc/icecast2/icecast.xml /etc/icecast2/icecast.bcp.xml 2>/dev/null || true\nfi\n\nif [ -f configs/icecast.xml ]; then\n    cp configs/icecast.xml /mnt/server/icecast.xml\nelse\n    log_error \"icecast.xml not found in configs directory\"\n    exit 1\nfi\n\nlog_info \"Configuring ezstream...\"\nmkdir -p /etc/ezstream || true\n\nif [ -f configs/ezstream.v1.xml ]; then\n    cp configs/ezstream.v1.xml /mnt/server/ezstream.xml\nelif [ -f configs/ezstream.v0.xml ]; then\n    cp configs/ezstream.v0.xml /mnt/server/ezstream.xml\nelse\n    log_error \"ezstream configuration not found\"\n    exit 1\nfi\n\nlog_info \"Creating playlist file...\"\ntouch /mnt/server/playlist.m3u\n\nif [ -d /etc/ezstream ]; then\n    ln -sf /mnt/server/playlist.m3u /etc/ezstream/playlist.m3u 2>/dev/null || true\nfi\n\nlog_info \"Setting up directory structure...\"\nmkdir -p /mnt/server/music\nmkdir -p /mnt/server/log\n\n# Advanced feature setup based on environment variables\nif [ \"${ENABLE_ADS}\" = \"true\" ] || [ \"${ENABLE_ADS}\" = \"1\" ]; then\n    log_success \"Ads feature ENABLED - Creating ads directory\"\n    mkdir -p /mnt/server/ads\n    echo \"# Place your advertisement audio files here\" > /mnt/server/ads/README.txt\n    echo \"# Supported formats: MP3, OGG, OPUS, FLAC, M4A\" >> /mnt/server/ads/README.txt\n    echo \"# Ads will play every ${ADS_FREQUENCY:-5} songs\" >> /mnt/server/ads/README.txt\nelse\n    log_info \"Ads feature disabled (set ENABLE_ADS=true to enable)\"\nfi\n\nif [ \"${ENABLE_JINGLES}\" = \"true\" ] || [ \"${ENABLE_JINGLES}\" = \"1\" ]; then\n    log_success \"Jingles feature ENABLED - Creating jingles directory\"\n    mkdir -p /mnt/server/jingles\n    echo \"# Place your station jingles/IDs here\" > /mnt/server/jingles/README.txt\n    echo \"# Supported formats: MP3, OGG, OPUS, FLAC, M4A\" >> /mnt/server/jingles/README.txt\n    echo \"# Jingles will play every ${JINGLE_FREQUENCY:-3} songs\" >> /mnt/server/jingles/README.txt\nelse\n    log_info \"Jingles feature disabled (set ENABLE_JINGLES=true to enable)\"\nfi\n\nif [ \"${USE_MULTI_PLAYLIST}\" = \"true\" ] || [ \"${USE_MULTI_PLAYLIST}\" = \"1\" ]; then\n    log_success \"Multi-Playlist mode ENABLED - Creating playlists directory\"\n    mkdir -p /mnt/server/playlists\n    mkdir -p /mnt/server/playlists/playlist1\n    mkdir -p /mnt/server/playlists/playlist2\n    mkdir -p /mnt/server/playlists/playlist3\n    echo \"# Multi-Playlist Mode\" > /mnt/server/playlists/README.txt\n    echo \"# Create subdirectories for different playlists\" >> /mnt/server/playlists/README.txt\n    echo \"# Example: playlists/rock/, playlists/pop/, playlists/jazz/\" >> /mnt/server/playlists/README.txt\n    echo \"# All will be mixed intelligently by the AutoDJ\" >> /mnt/server/playlists/README.txt\nelse\n    log_info \"Single playlist mode (set USE_MULTI_PLAYLIST=true for multi-playlist)\"\nfi\n\nif [ ! -d /var/log/icecast2 ]; then\n    ln -sf /mnt/server/log /var/log/icecast2 2>/dev/null || true\nfi\n\nlog_info \"Setting ownership permissions...\"\nif id -u icecast2 &>/dev/null; then\n    chown -R icecast2:icecast /etc/ezstream 2>/dev/null || true\n    chown -R icecast2:icecast /mnt/server/music 2>/dev/null || true\n    chown -R icecast2:icecast /mnt/server/log 2>/dev/null || true\n    [ -d /mnt/server/ads ] && chown -R icecast2:icecast /mnt/server/ads 2>/dev/null || true\n    [ -d /mnt/server/jingles ] && chown -R icecast2:icecast /mnt/server/jingles 2>/dev/null || true\n    [ -d /mnt/server/playlists ] && chown -R icecast2:icecast /mnt/server/playlists 2>/dev/null || true\nelse\n    log_warn \"icecast2 user not found, skipping ownership changes\"\nfi\n\nlog_info \"Creating helper scripts...\"\ncat > /mnt/server/refresh_playlist.sh << 'REFRESH_EOF'\n#!/bin/bash\nlog_info() { echo -e \"\\033[0;32m[INFO]\\033[0m $1\"; }\nlog_info \"Refreshing playlist...\"\nEZSTREAM_PID=$(pgrep ezstream | head -1)\nif [ -n \"$EZSTREAM_PID\" ]; then\n    kill -SIGHUP $EZSTREAM_PID\n    log_info \"Playlist refresh signal sent\"\nelse\n    echo \"ezstream not running\"\nfi\nREFRESH_EOF\n\ncat > /mnt/server/skip_track.sh << 'SKIP_EOF'\n#!/bin/bash\nlog_info() { echo -e \"\\033[0;32m[INFO]\\033[0m $1\"; }\nlog_info \"Skipping current track...\"\nEZSTREAM_PID=$(pgrep ezstream | head -1)\nif [ -n \"$EZSTREAM_PID\" ]; then\n    kill -SIGUSR1 $EZSTREAM_PID\n    log_info \"Skip signal sent\"\nelse\n    echo \"ezstream not running\"\nfi\nSKIP_EOF\n\nchmod +x /mnt/server/refresh_playlist.sh 2>/dev/null || true\nchmod +x /mnt/server/skip_track.sh 2>/dev/null || true\n\nlog_info \"Verifying installation...\"\nERRORS=0\n\n[ ! -f /mnt/server/icecast.xml ] && { log_error \"icecast.xml not found\"; ERRORS=$((ERRORS+1)); }\n[ ! -f /mnt/server/ezstream.xml ] && { log_error \"ezstream.xml not found\"; ERRORS=$((ERRORS+1)); }\n[ ! -f /mnt/server/playlist.m3u ] && { log_error \"playlist.m3u not found\"; ERRORS=$((ERRORS+1)); }\n[ ! -d /mnt/server/music ] && { log_error \"music directory not found\"; ERRORS=$((ERRORS+1)); }\n[ ! -d /mnt/server/log ] && { log_error \"log directory not found\"; ERRORS=$((ERRORS+1)); }\n\nif [ $ERRORS -gt 0 ]; then\n    log_error \"Installation completed with $ERRORS error(s)\"\n    exit 1\nfi\n\nlog_success \"═══════════════════════════════════════════════════════════════\"\nlog_success \"  Installation completed successfully!\"\nlog_success \"═══════════════════════════════════════════════════════════════\"\necho \"\"\nlog_info \"Next steps:\"\nlog_info \"  1. Upload music files to /music directory\"\n[ -d /mnt/server/ads ] && log_info \"  2. Upload ads to /ads directory (optional)\"\n[ -d /mnt/server/jingles ] && log_info \"  3. Upload jingles to /jingles directory (optional)\"\n[ -d /mnt/server/playlists ] && log_info \"  4. Organize playlists in /playlists/* directories\"\nlog_info \"  5. Start the server\"\nlog_info \"  6. Access: http://YOUR_IP:PORT/autodj\"\necho \"\"\nlog_banner \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\"\nlog_banner \"  Created by: @zeropointbruh (wegj1@hotmail.com)\"\nlog_banner \"  Website: https://banabyte.com\"\nlog_banner \"  LICENSE: Credit @zeropointbruh when using commercially\"\nlog_banner \"  This software follows Icecast GPL v2 licensing\"\nlog_banner \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\"\n\nexit 0",
+            "container": "ghcr.io/zeropointbruh/icecast-autodj:latest",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Repository URL",
+            "description": "Git repository URL for Icecast AutoDJ source code",
+            "env_variable": "REPO_URL",
+            "default_value": "https://github.com/zeropointbruh/icecast-autodj.git",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:256",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Ads",
+            "description": "Enable ads rotation feature? Creates /ads folder for advertisement audio files.",
+            "env_variable": "ENABLE_ADS",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Jingles",
+            "description": "Enable jingle injection feature? Creates /jingles folder for station IDs and jingles.",
+            "env_variable": "ENABLE_JINGLES",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Multi-Playlist Mode",
+            "description": "Enable multi-playlist support? Creates /playlists folder for organizing multiple playlists.",
+            "env_variable": "USE_MULTI_PLAYLIST",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Ads Frequency",
+            "description": "Play one ad every X songs (only if ads enabled)",
+            "env_variable": "ADS_FREQUENCY",
+            "default_value": "5",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:1|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "Jingle Frequency",
+            "description": "Play one jingle every X songs (only if jingles enabled)",
+            "env_variable": "JINGLE_FREQUENCY",
+            "default_value": "3",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:1|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "Source Password",
+            "description": "Password for streaming sources to connect to Icecast",
+            "env_variable": "SOURCE_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:12|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Admin Password",
+            "description": "Password for Icecast web admin interface",
+            "env_variable": "ADMIN_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:12|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Admin Username",
+            "description": "Username for Icecast web admin interface",
+            "env_variable": "ADMIN_USER",
+            "default_value": "admin",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:32",
+            "field_type": "text"
+        },
+        {
+            "name": "Relay Password",
+            "description": "Password for relay servers",
+            "env_variable": "RELAY_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:12|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "AutoDJ Password",
+            "description": "Password for AutoDJ mount point",
+            "env_variable": "AUTODJ_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:12|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Live Password",
+            "description": "Password for live streaming mount point",
+            "env_variable": "LIVE_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:12|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Mount Point",
+            "description": "Mount point for AutoDJ stream",
+            "env_variable": "MOUNT_POINT",
+            "default_value": "/autodj",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Max Clients",
+            "description": "Maximum concurrent listeners",
+            "env_variable": "MAX_CLIENTS",
+            "default_value": "100",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:1|max:10000",
+            "field_type": "text"
+        },
+        {
+            "name": "Max Sources",
+            "description": "Maximum streaming sources",
+            "env_variable": "MAX_SOURCES",
+            "default_value": "2",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:1|max:10",
+            "field_type": "text"
+        },
+        {
+            "name": "Stream Format",
+            "description": "Audio format for stream",
+            "env_variable": "STREAM_FORMAT",
+            "default_value": "MP3",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:MP3,OGG,OPUS",
+            "field_type": "text"
+        },
+        {
+            "name": "Station Name",
+            "description": "Your radio station name",
+            "env_variable": "STATION_NAME",
+            "default_value": "Enhanced AutoDJ Radio",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Station Genre",
+            "description": "Your radio station genre",
+            "env_variable": "STATION_GENRE",
+            "default_value": "Various",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Station Description",
+            "description": "Your radio station description",
+            "env_variable": "STATION_DESCRIPTION",
+            "default_value": "Enhanced AutoDJ Stream by @zeropointbruh",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:256",
+            "field_type": "text"
+        },
+        {
+            "name": "Hostname",
+            "description": "Hostname or IP for the radio server",
+            "env_variable": "HOSTNAME",
+            "default_value": "localhost",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Location",
+            "description": "Geographic location of server",
+            "env_variable": "LOCATION",
+            "default_value": "Earth",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Admin Email",
+            "description": "Contact email for server administrator",
+            "env_variable": "ADMIN_EMAIL",
+            "default_value": "wegj1@hotmail.com",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|email|max:128",
+            "field_type": "text"
+        }
+    ]
+}

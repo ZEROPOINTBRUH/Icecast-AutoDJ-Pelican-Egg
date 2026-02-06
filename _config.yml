@@ -1,0 +1,96 @@
+# GitHub Pages Configuration for AutoDJ-Extreme
+
+title: AutoDJ-Extreme
+description: >-
+  Professional Icecast radio streaming with AutoDJ, multi-playlist support,
+  ads rotation, and jingle injection. Built for Pterodactyl & Pelican Panel.
+  
+author: Banabyte LLC
+email: wegj1@hotmail.com
+url: https://zeropointbruh.github.io/AutoDJ-Extreme
+baseurl: /AutoDJ-Extreme
+
+# Theme
+theme: jekyll-theme-cayman
+remote_theme: pages-themes/cayman@v0.2.0
+
+# Plugins
+plugins:
+  - jekyll-remote-theme
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# GitHub Pages settings
+repository: ZEROPOINTBRUH/AutoDJ-Extreme
+github:
+  owner_name: Banabyte LLC
+  owner_url: https://banabyte.com
+  repository_url: https://github.com/ZEROPOINTBRUH/AutoDJ-Extreme
+  repository_nwo: ZEROPOINTBRUH/AutoDJ-Extreme
+
+# Social
+twitter:
+  username: zeropointbruh
+  card: summary_large_image
+
+social:
+  name: Banabyte LLC
+  links:
+    - https://github.com/ZEROPOINTBRUH
+    - https://banabyte.com
+
+# SEO
+logo: /assets/logo.png
+tagline: Professional Radio Streaming Made Easy
+
+# Navigation (for documentation pages)
+navigation:
+  - title: Home
+    url: /
+  - title: Documentation
+    url: /docs/
+  - title: Getting Started
+    url: /docs/getting-started/quickstart
+  - title: Download
+    url: https://github.com/ZEROPOINTBRUH/AutoDJ-Extreme/releases
+
+# Exclude from processing
+exclude:
+  - vendor
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - docker
+  - egg
+  - icecast-autodj-backup
+  - .github
+
+# Include
+include:
+  - _pages
+  - assets
+  - docs
+
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
+# Permalinks
+permalink: /:categories/:title/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "docs"
+    values:
+      layout: "default"
