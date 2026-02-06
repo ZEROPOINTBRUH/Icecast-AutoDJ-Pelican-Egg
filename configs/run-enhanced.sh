@@ -474,54 +474,23 @@ main() {
     print_section_header "STARTING SERVICES"
     # Generate Liquidsoap config with correct password from environment
     log_info "Generating Liquidsoap configuration..."
-    ICECAST_SOURCE_PASSWORD="${SOURCE_PASSWORD:-sourcepassword}"
+    ICECAST_SOURCE_PASSWORD="${SOURCE_PASSWORD:-autodjpassword123}"
     
-    # Create minimal working config - MP3 only (guaranteed to work)
-    # Based on official Liquidsoap 2.0 documentation
-    cat > /home/container/radio.liq << 'LIQUIDSOAP_CONFIG'
+    # Create simple working config - matching original format that worked
+    cat > /home/container/radio.liq << EOF
 #!/usr/bin/liquidsoap
 # AutoDJ-Extreme by @zeropointbruh
-# github.com/ZEROPOINTBRUH/AutoDJ-Extreme | ko-fi.com/zeropointbruh
 
-# Logging
 set("log.file.path", "/home/container/log/liquidsoap.log")
 set("log.level", 3)
 
-# Load playlist from music directory or m3u file
-music = playlist(mode="randomize", "/home/container/playlist.m3u")
-
-# Make source infallible (plays silence if playlist empty)
+music = playlist("/home/container/playlist.m3u")
 radio = mksafe(music)
 
-# Output to Icecast - MP3 128kbps
-output.icecast(
-  %mp3(bitrate=128),
-  host="localhost",
-  port=8000,
-  password="ICECAST_PASSWORD_PLACEHOLDER",
-  mount="autodj.mp3",
-  name="AutoDJ Extreme",
-  description="Powered by AutoDJ-Extreme",
-  radio
-)
-
-# Output to Icecast - OGG Vorbis
-output.icecast(
-  %vorbis(quality=0.5),
-  host="localhost",
-  port=8000,
-  password="ICECAST_PASSWORD_PLACEHOLDER",
-  mount="autodj.ogg",
-  name="AutoDJ Extreme (OGG)",
-  description="Powered by AutoDJ-Extreme",
-  radio
-)
-LIQUIDSOAP_CONFIG
-
-    # Replace password placeholder with actual password
-    sed -i "s/ICECAST_PASSWORD_PLACEHOLDER/${ICECAST_SOURCE_PASSWORD}/g" /home/container/radio.liq
+output.icecast(%mp3(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.mp3", radio)
+EOF
     
-    log_success "Liquidsoap config generated (MP3 + OGG outputs)"
+    log_success "Liquidsoap config generated"
     
     # Copy Icecast XSL files to webroot (required for status-json.xsl endpoint)
     log_info "Setting up Icecast status endpoints..."
