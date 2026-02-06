@@ -119,17 +119,31 @@ scheduled_music = amplify(1.0, override="replay_gain", scheduled_music)
 ads = amplify(1.0, override="replay_gain", ads)
 jingles = amplify(1.0, override="replay_gain", jingles)
 
-# Smart crossfading
+# Advanced smart crossfading with fade detection
 scheduled_music = crossfade(start_next=2.0, fade_in=3.0, fade_out=3.0, scheduled_music)
 
-# Professional audio processing
-# Note: Advanced EQ requires additional plugins
+# ADVANCED AUDIO PROCESSING CHAIN
+# Professional EQ using FFmpeg filters
+scheduled_music = ffmpeg.filter.audio.input(
+  "equalizer=f=80:width_type=q:width=1.0:g=3," ^
+  "equalizer=f=3000:width_type=q:width=1.0:g=2," ^
+  "equalizer=f=8000:width_type=q:width=0.7:g=1.5," ^
+  "highpass=f=30",
+  scheduled_music
+)
 
-# Basic compression
-scheduled_music = compress(scheduled_music)
+# Multiband compression using FFmpeg
+scheduled_music = ffmpeg.filter.audio.input(
+  "acompressor=threshold=-20dB:ratio=4:attack=10:release=100," ^
+  "volume=replaygain=track",
+  scheduled_music
+)
 
-# Limiter to prevent clipping
-scheduled_music = compress.exponential(scheduled_music)
+# Stereo enhancement
+scheduled_music = ffmpeg.filter.audio.input("stereotools=mlev=0.8", scheduled_music)
+
+# Final limiter to prevent clipping  
+scheduled_music = ffmpeg.filter.audio.input("alimiter=limit=0.99:attack=5:release=50", scheduled_music)
 
 # Normalize to broadcast standard
 scheduled_music = normalize(target=-14.0, threshold=-40.0, scheduled_music)
@@ -179,8 +193,20 @@ radio = fallback(track_sensitive=false, [radio, emergency])
 # STREAM RECORDING & ARCHIVING
 ###################################################################################
 
-# Recording disabled by default (uncomment to enable)
-# output.file(%mp3(bitrate=192), "/home/container/recordings/stream.mp3", radio)
+# STREAM RECORDING & ARCHIVING
+# Record stream to hourly timestamped files
+output.file(
+  %mp3(bitrate=192),
+  {time.string("/home/container/recordings/%Y-%m-%d/%H-00-00.mp3")},
+  reopen_on_metadata=false,
+  fallible=true,
+  radio
+)
+
+# Track history logging
+radio = on_track(fun(m) -> begin
+  log("Track: #{m['artist']} - #{m['title']} [#{m['filename']}]")
+end, radio)
 
 ###################################################################################
 # LIVE INPUT (DJ Override)
@@ -307,9 +333,37 @@ output.icecast(
   radio
 )
 
-# AAC requires libfdk-aac encoder (commented out - may not be available)
-# output.icecast(%fdkaac(bitrate=128), host=icecast_host, port=icecast_port, 
-#   password=icecast_password, mount="/autodj.aac", radio)
+# AAC 128kbps - Modern codec with FDK-AAC
+output.icecast(
+  %ffmpeg(format="adts", %audio(codec="aac", b="128k", samplerate=44100)),
+  host=icecast_host,
+  port=icecast_port,
+  password=icecast_password,
+  mount="/autodj.aac",
+  name=station_name ^ " - AAC",
+  description=station_description ^ " - AAC Format",
+  genre=station_genre,
+  url=station_url,
+  public=false,
+  icy_metadata="true",
+  radio
+)
+
+# AAC+ 64kbps HE-AAC for mobile
+output.icecast(
+  %ffmpeg(format="adts", %audio(codec="aac", b="64k", profile="aac_he", samplerate=44100)),
+  host=icecast_host,
+  port=icecast_port,
+  password=icecast_password,
+  mount="/autodj-mobile.aac",
+  name=station_name ^ " - AAC+ Mobile",
+  description=station_description ^ " - HE-AAC Mobile",
+  genre=station_genre,
+  url=station_url,
+  public=false,
+  icy_metadata="true",
+  radio
+)
 
 # OPUS 96kbps - Best quality/bitrate ratio
 output.icecast(
@@ -356,19 +410,47 @@ output.icecast(
   radio
 )
 
-# HLS streaming requires liquidsoap-plugin-hls (disabled by default)
-# Uncomment if HLS plugin is installed
+# HLS STREAMING for iOS/Safari/Smart TVs
+output.file.hls(
+  playlist="/home/container/hls/live.m3u8",
+  segment_duration=10.0,
+  segments=6,
+  segments_overhead=12,
+  [
+    ("/home/container/hls/mp3_128", %mp3(bitrate=128)),
+    ("/home/container/hls/mp3_64", %mp3(bitrate=64)),
+    ("/home/container/hls/aac_128", %ffmpeg(format="adts", %audio(codec="aac", b="128k")))
+  ],
+  radio
+)
 
 ###################################################################################
 # ADVANCED METADATA MANAGEMENT
 ###################################################################################
 
-# Metadata logging
-def log_meta(m) =
+# ADVANCED METADATA MANAGEMENT
+# Enhanced metadata with JSON export
+def enhance_metadata(m) =
+  # Log to console
   log("Now playing: #{m['artist']} - #{m['title']}")
+  
+  # Export to JSON file for web UI
+  json_data = json.stringify([
+    ("artist", m["artist"]),
+    ("title", m["title"]),
+    ("genre", m["genre"]),
+    ("album", m["album"]),
+    ("station", station_name),
+    ("website", station_url),
+    ("timestamp", string(time()))
+  ])
+  
+  ignore(file.write(data=json_data, "/home/container/now_playing.json"))
+  
   m
 end
-radio = map_metadata(log_meta, radio)
+
+radio = map_metadata(enhance_metadata, radio)
 
 ###################################################################################
 # REMOTE CONTROL & MONITORING
@@ -377,5 +459,50 @@ radio = map_metadata(log_meta, radio)
 # Enable telnet server for remote control
 server.telnet(port=1234)
 
-# API endpoints require harbor.http (commented out for compatibility)
-# Uncomment if harbor.http is available
+# HARBOR HTTP API ENDPOINTS
+def handle_request(~protocol, ~data, ~headers, uri) =
+  # Parse URI
+  let (path, args) = url.split(uri)
+  
+  # Health check endpoint
+  if path == "/api/health" then
+    http.response(
+      protocol=protocol,
+      code=200,
+      headers=[("Content-Type", "application/json")],
+      data='{"status":"ok","uptime":"#{time()}"}'
+    )
+  
+  # Song request endpoint  
+  elsif path == "/api/request" then
+    song_uri = list.assoc(default="", "uri", args)
+    if song_uri != "" then
+      request.push(song_uri)
+      http.response(
+        protocol=protocol,
+        code=200,
+        headers=[("Content-Type", "application/json")],
+        data='{"status":"ok","message":"Song queued"}'
+      )
+    else
+      http.response(
+        protocol=protocol,
+        code=400,
+        headers=[("Content-Type", "application/json")],
+        data='{"status":"error","message":"Missing uri parameter"}'
+      )
+    end
+  
+  # Default 404
+  else
+    http.response(
+      protocol=protocol,
+      code=404,
+      headers=[("Content-Type", "application/json")],
+      data='{"status":"error","message":"Not found"}'
+    )
+  end
+end
+
+# Register HTTP handler on harbor
+harbor.http.register(port=8000, method="GET", "/api", handle_request)

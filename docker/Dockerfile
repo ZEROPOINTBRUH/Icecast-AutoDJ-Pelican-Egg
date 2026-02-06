@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Create container user (required by Pelican Panel)
 RUN useradd -m -d /home/container -s /bin/bash container
 
-# Install all dependencies
+# Install all dependencies including audio codecs and processing tools
 RUN apt-get update && apt-get install -y \
     icecast2 \
     liquidsoap \
@@ -19,6 +19,25 @@ RUN apt-get update && apt-get install -y \
     vorbis-tools \
     opus-tools \
     ffmpeg \
+    libfdk-aac2 \
+    libfdk-aac-dev \
+    flac \
+    libsamplerate0 \
+    libsamplerate0-dev \
+    libmad0 \
+    libmad0-dev \
+    libmp3lame0 \
+    libmp3lame-dev \
+    libvorbis0a \
+    libvorbis-dev \
+    libopus0 \
+    libopus-dev \
+    libavcodec-extra \
+    libavformat-dev \
+    libavutil-dev \
+    libswresample-dev \
+    sox \
+    libsox-fmt-all \
     git \
     curl \
     wget \
@@ -27,6 +46,7 @@ RUN apt-get update && apt-get install -y \
     coreutils \
     procps \
     findutils \
+    ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
