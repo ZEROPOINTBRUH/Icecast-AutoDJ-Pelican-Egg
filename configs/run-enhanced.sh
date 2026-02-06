@@ -474,7 +474,7 @@ main() {
     print_section_header "STARTING SERVICES"
     
     log_info "Starting Icecast server..."
-    /usr/bin/icecast2 -b -c "/home/container/icecast.xml" &
+    /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_debug "icecast: $line"; done &
     ICECAST_PID=$!
     
     sleep 5
@@ -532,7 +532,7 @@ main() {
     while true; do
         if ! kill -0 $ICECAST_PID 2>/dev/null; then
             log_error "Icecast process died! Attempting restart..."
-            /usr/bin/icecast2 -b -c "/home/container/icecast.xml" &
+            /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_debug "icecast: $line"; done &
             ICECAST_PID=$!
             sleep 3
             log_warn "Icecast restarted with PID: $ICECAST_PID"
