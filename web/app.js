@@ -1,19 +1,9 @@
 // AutoDJ Extreme - Web Control Panel
 const API_BASE = window.location.origin;
 
-// Stream formats available
+// Stream formats available - matches actual Liquidsoap output
 const streamFormats = [
-    { name: 'MP3 64k (Mobile)', url: '/autodj-64.mp3', quality: 'Low bandwidth', format: 'MP3' },
-    { name: 'MP3 128k (Standard)', url: '/autodj-128.mp3', quality: 'Standard quality', format: 'MP3' },
-    { name: 'MP3 192k (High)', url: '/autodj-192.mp3', quality: 'High quality', format: 'MP3' },
-    { name: 'MP3 320k (Studio)', url: '/autodj-320.mp3', quality: 'Studio quality', format: 'MP3' },
-    { name: 'OGG Vorbis', url: '/autodj.ogg', quality: 'Efficient compression', format: 'OGG' },
-    { name: 'OGG Vorbis HQ', url: '/autodj-hq.ogg', quality: 'High quality', format: 'OGG' },
-    { name: 'AAC', url: '/autodj.aac', quality: 'iOS compatible', format: 'AAC' },
-    { name: 'AAC+ Mobile', url: '/autodj-mobile.aac', quality: 'Mobile optimized', format: 'AAC+' },
-    { name: 'OPUS', url: '/autodj.opus', quality: 'Modern codec', format: 'OPUS' },
-    { name: 'OPUS HQ', url: '/autodj-hq.opus', quality: 'High quality', format: 'OPUS' },
-    { name: 'FLAC Lossless', url: '/autodj.flac', quality: 'Audiophile quality', format: 'FLAC' }
+    { name: 'MP3 Stream', url: '/autodj.mp3', quality: '128kbps MP3', format: 'MP3' }
 ];
 
 // Initialize app
@@ -143,15 +133,31 @@ function updateFromIcecastStats() {
         .then(data => {
             const source = data.icestats?.source;
             if (source) {
+                // Handle single source or array of sources
+                const src = Array.isArray(source) ? source[0] : source;
                 const trackData = {
-                    title: source.title || 'Unknown Title',
-                    artist: source.artist || 'Unknown Artist',
-                    genre: source.genre || 'Various'
+                    title: src.title || src.server_name || 'AutoDJ Stream',
+                    artist: src.artist || 'Now Playing',
+                    genre: src.genre || 'Various'
                 };
                 updateTrackDisplay(trackData);
+                
+                // Update status indicator
+                const statusDot = document.querySelector('.status-dot');
+                if (statusDot) statusDot.style.background = '#1db954';
+            } else {
+                // No source = no stream
+                document.getElementById('trackTitle').textContent = 'Stream Offline';
+                document.getElementById('trackArtist').textContent = 'Waiting for source...';
+                const statusDot = document.querySelector('.status-dot');
+                if (statusDot) statusDot.style.background = '#f83062';
             }
         })
-        .catch(err => console.error('Stats error:', err));
+        .catch(err => {
+            console.error('Stats error:', err);
+            document.getElementById('trackTitle').textContent = 'Connection Error';
+            document.getElementById('trackArtist').textContent = 'Unable to reach server';
+        });
 }
 
 function updateTrackDisplay(data) {
@@ -171,20 +177,31 @@ async function updateStats() {
         const data = await response.json();
         
         const stats = data.icestats;
+        if (!stats) return;
         
         // Update listener count
         let totalListeners = 0;
+        let isLive = false;
         if (stats.source) {
             const sources = Array.isArray(stats.source) ? stats.source : [stats.source];
             totalListeners = sources.reduce((sum, s) => sum + (parseInt(s.listeners) || 0), 0);
+            isLive = sources.length > 0;
         }
         
-        document.getElementById('listenerCount').textContent = totalListeners;
+        const listenerEl = document.getElementById('listenerCount');
+        if (listenerEl) listenerEl.textContent = totalListeners;
         
-        // Update other stats if available
+        // Update stream status
+        const streamStatus = document.getElementById('streamStatus');
+        if (streamStatus) {
+            streamStatus.textContent = isLive ? 'LIVE' : 'OFFLINE';
+            streamStatus.style.color = isLive ? '#1db954' : '#f83062';
+        }
+        
+        // Update uptime
         if (stats.server_start) {
-            const uptime = calculateUptime(stats.server_start);
-            document.getElementById('uptime').textContent = uptime;
+            const uptimeEl = document.getElementById('uptime');
+            if (uptimeEl) uptimeEl.textContent = calculateUptime(stats.server_start);
         }
     } catch (error) {
         console.error('Failed to update stats:', error);
