@@ -41,7 +41,7 @@
             "name": "Repository URL",
             "description": "Git repository URL for Icecast AutoDJ source code",
             "env_variable": "REPO_URL",
-            "default_value": "https://github.com/zeropointbruh/icecast-autodj.git",
+            "default_value": "https://github.com/ZEROPOINTBRUH/AutoDJ-Extreme.git",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string|max:256",
