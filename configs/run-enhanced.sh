@@ -472,6 +472,26 @@ main() {
     
     # Start Icecast
     print_section_header "STARTING SERVICES"
+    # Generate Liquidsoap config with correct password from environment
+    log_info "Generating Liquidsoap configuration..."
+    ICECAST_SOURCE_PASSWORD="${SOURCE_PASSWORD:-sourcepassword}"
+    cat > /home/container/radio.liq << EOF
+#!/usr/bin/liquidsoap
+# AutoDJ-Extreme by @zeropointbruh | github.com/ZEROPOINTBRUH/AutoDJ-Extreme | ko-fi.com/zeropointbruh
+
+set("log.file.path", "/home/container/log/liquidsoap.log")
+set("log.level", 3)
+
+music = playlist("/home/container/playlist.m3u")
+radio = mksafe(music)
+
+output.icecast(%mp3(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.mp3", radio)
+
+# Hourly credit message - runs every 3600 seconds (1 hour)
+thread.run(delay=3600.0, fun() -> log("[CREDIT] Powered by @zeropointbruh | ⭐ github.com/ZEROPOINTBRUH/AutoDJ-Extreme | ☕ ko-fi.com/zeropointbruh"))
+EOF
+    log_success "Liquidsoap config generated with source password from environment"
+    
     # Ensure Icecast web files exist (XSLT templates)
     log_info "Ensuring Icecast web files are present..."
     if [ ! -f /home/container/web/status.xsl ]; then
