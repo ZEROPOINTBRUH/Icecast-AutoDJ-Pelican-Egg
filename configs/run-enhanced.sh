@@ -482,15 +482,32 @@ main() {
 set("log.file.path", "/home/container/log/liquidsoap.log")
 set("log.level", 3)
 
+# Main playlist source
 music = playlist("/home/container/playlist.m3u")
 radio = mksafe(music)
 
+# MP3 128kbps - Standard quality
 output.icecast(%mp3(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.mp3", radio)
 
-# Hourly credit message - runs every 3600 seconds (1 hour)
-thread.run(delay=3600.0, fun() -> log("[CREDIT] Powered by @zeropointbruh | ⭐ github.com/ZEROPOINTBRUH/AutoDJ-Extreme | ☕ ko-fi.com/zeropointbruh"))
+# MP3 320kbps - High quality
+output.icecast(%mp3(bitrate=320), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj-hq.mp3", radio)
+
+# OGG Vorbis
+output.icecast(%vorbis(quality=0.6), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.ogg", radio)
+
+# AAC (via ffmpeg)
+output.icecast(%fdkaac(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.aac", radio)
+
+# OPUS
+output.icecast(%opus(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.opus", radio)
+
+# FLAC Lossless
+output.icecast(%ogg(%flac), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.flac", radio)
+
+# Hourly credit message
+thread.run(delay=3600.0, fun() -> log("[CREDIT] Powered by @zeropointbruh | github.com/ZEROPOINTBRUH/AutoDJ-Extreme | ko-fi.com/zeropointbruh"))
 EOF
-    log_success "Liquidsoap config generated with source password from environment"
+    log_success "Liquidsoap config generated with 6 output formats"
     
     # Start Icecast
     log_info "Starting Icecast server..."

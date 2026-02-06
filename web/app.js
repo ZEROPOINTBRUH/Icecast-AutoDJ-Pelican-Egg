@@ -1,9 +1,14 @@
 // AutoDJ Extreme - Web Control Panel
 const API_BASE = window.location.origin;
 
-// Stream formats available - matches actual Liquidsoap output
+// Stream formats available - matches Liquidsoap outputs
 const streamFormats = [
-    { name: 'MP3 Stream', url: '/autodj.mp3', quality: '128kbps MP3', format: 'MP3' }
+    { name: 'MP3 128k', url: '/autodj.mp3', quality: 'Standard quality', format: 'MP3' },
+    { name: 'MP3 320k', url: '/autodj-hq.mp3', quality: 'High quality', format: 'MP3' },
+    { name: 'OGG Vorbis', url: '/autodj.ogg', quality: 'Efficient compression', format: 'OGG' },
+    { name: 'AAC', url: '/autodj.aac', quality: 'iOS/Android compatible', format: 'AAC' },
+    { name: 'OPUS', url: '/autodj.opus', quality: 'Best quality/size ratio', format: 'OPUS' },
+    { name: 'FLAC', url: '/autodj.flac', quality: 'Lossless', format: 'FLAC' }
 ];
 
 // Initialize app
