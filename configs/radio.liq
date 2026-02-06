@@ -67,12 +67,39 @@ night_music = playlist(
   "/home/container/playlists/night.m3u"
 )
 
-# Main music playlist (fallback)
+# Main music playlist with SMART SHUFFLE
+# Prevents same artist/genre repetition
 music = playlist(
   mode="randomize",
   reload_mode="watch",
   "/home/container/playlist.m3u"
 )
+
+# Smart shuffle filter - prevents artist repetition
+def smart_shuffle_filter(previous, current) =
+  # Get artist from metadata
+  prev_artist = list.assoc(default="", "artist", previous)
+  curr_artist = list.assoc(default="", "artist", current)
+  
+  # Get genre from metadata
+  prev_genre = list.assoc(default="", "genre", previous)
+  curr_genre = list.assoc(default="", "genre", current)
+  
+  # Prevent same artist back-to-back
+  if prev_artist != "" and prev_artist == curr_artist then
+    log("Smart shuffle: Skipping #{curr_artist} - same artist")
+    false
+  # Prevent same genre twice in a row
+  elsif prev_genre != "" and prev_genre == curr_genre then
+    log("Smart shuffle: Skipping #{curr_genre} genre - too repetitive")
+    false
+  else
+    true
+  end
+end
+
+# Apply smart shuffle filter
+music = playlist.filter(smart_shuffle_filter, music)
 
 # Schedule-based music selection
 scheduled_music = switch(

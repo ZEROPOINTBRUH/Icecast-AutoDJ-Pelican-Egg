@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request a Song - AutoDJ Extreme Radio</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .request-container {
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .radio-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .radio-logo h1 {
+            font-size: 48px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .radio-logo p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .now-playing-banner {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .playing-icon {
+            font-size: 48px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .playing-info h3 {
+            margin-bottom: 4px;
+            font-size: 18px;
+        }
+
+        .playing-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .request-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-btn {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, var(--accent-primary), #1ed760);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(29, 185, 84, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .success-message,
+        .error-message {
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .success-message {
+            background: rgba(29, 185, 84, 0.2);
+            border: 2px solid var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .error-message {
+            background: rgba(248, 48, 98, 0.2);
+            border: 2px solid var(--accent-pink);
+            color: var(--accent-pink);
+        }
+
+        .recent-requests {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .recent-requests h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .request-item {
+            background: var(--bg-tertiary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .request-item-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .request-item-info small {
+            color: var(--text-secondary);
+        }
+
+        .request-time {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="request-container">
+        <div class="radio-logo">
+            <h1>🎵 AutoDJ Extreme</h1>
+            <p>Request Your Favorite Songs</p>
+        </div>
+
+        <div class="now-playing-banner">
+            <div class="playing-icon">🎧</div>
+            <div class="playing-info">
+                <h3 id="nowPlayingTrack">Loading...</h3>
+                <p id="nowPlayingArtist">Please wait</p>
+            </div>
+        </div>
+
+        <form class="request-form" id="requestForm">
+            <div class="form-group">
+                <label for="listenerName">Your Name *</label>
+                <input type="text" id="listenerName" placeholder="Enter your name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="songTitle">Song Title *</label>
+                <input type="text" id="songTitle" placeholder="Enter song title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="artistName">Artist Name *</label>
+                <input type="text" id="artistName" placeholder="Enter artist name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Message (Optional)</label>
+                <textarea id="message" placeholder="Add a message or dedication..."></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                🎵 Submit Request
+            </button>
+        </form>
+
+        <div id="responseMessage"></div>
+
+        <div class="recent-requests">
+            <h3>📜 Recent Requests</h3>
+            <div id="recentRequestsList">
+                <div class="request-item">
+                    <div class="request-item-info">
+                        <strong>Summer Vibes - Cool Artist</strong>
+                        <small>Requested by John D.</small>
+                    </div>
+                    <span class="request-time">2 min ago</span>
+                </div>
+                <div class="request-item">
+                    <div class="request-item-info">
+                        <strong>Night Drive - Electronic Dreams</strong>
+                        <small>Requested by Sarah M.</small>
+                    </div>
+                    <span class="request-time">5 min ago</span>
+                </div>
+                <div class="request-item">
+                    <div class="request-item-info">
+                        <strong>Chill Beats - Lo-Fi Master</strong>
+                        <small>Requested by Mike K.</small>
+                    </div>
+                    <span class="request-time">12 min ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update now playing
+        async function updateNowPlaying() {
+            try {
+                const response = await fetch('/now_playing.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('nowPlayingTrack').textContent = data.title || 'Unknown Track';
+                    document.getElementById('nowPlayingArtist').textContent = data.artist || 'Unknown Artist';
+                }
+            } catch (error) {
+                console.error('Failed to load now playing:', error);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('requestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const responseMessage = document.getElementById('responseMessage');
+            
+            // Get form data
+            const data = {
+                listener: document.getElementById('listenerName').value,
+                song: document.getElementById('songTitle').value,
+                artist: document.getElementById('artistName').value,
+                message: document.getElementById('message').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            try {
+                // In production, send to API
+                // const response = await fetch('/api/request', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify(data)
+                // });
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Success
+                responseMessage.innerHTML = `
+                    <div class="success-message">
+                        ✅ Request submitted successfully!<br>
+                        <small>Your request will be played as soon as possible</small>
+                    </div>
+                `;
+                
+                // Reset form
+                document.getElementById('requestForm').reset();
+                
+                // Add to recent requests
+                addToRecentRequests(data);
+                
+            } catch (error) {
+                responseMessage.innerHTML = `
+                    <div class="error-message">
+                        ❌ Failed to submit request. Please try again.
+                    </div>
+                `;
+            }
+            
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🎵 Submit Request';
+        });
+
+        function addToRecentRequests(data) {
+            const list = document.getElementById('recentRequestsList');
+            const item = document.createElement('div');
+            item.className = 'request-item';
+            item.innerHTML = `
+                <div class="request-item-info">
+                    <strong>${data.song} - ${data.artist}</strong>
+                    <small>Requested by ${data.listener}</small>
+                </div>
+                <span class="request-time">Just now</span>
+            `;
+            list.insertBefore(item, list.firstChild);
+        }
+
+        // Initial load
+        updateNowPlaying();
+        setInterval(updateNowPlaying, 10000); // Update every 10 seconds
+    </script>
+</body>
+</html>
