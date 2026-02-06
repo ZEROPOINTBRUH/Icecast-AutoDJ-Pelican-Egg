@@ -46,8 +46,17 @@ echo ""
 echo "[5/6] Creating directory structure..."
 mkdir -p /mnt/server/music
 mkdir -p /mnt/server/log
+mkdir -p /mnt/server/web
 touch /mnt/server/playlist.m3u
 echo "Directories created"
+echo ""
+
+echo "Installing modern web interface..."
+cp -v repo/web/*.html /mnt/server/web/
+cp -v repo/web/*.css /mnt/server/web/
+cp -v repo/web/*.js /mnt/server/web/
+cp -v repo/web/*.json /mnt/server/web/ 2>/dev/null || true
+echo "Web UI installed successfully"
 echo ""
 
 if [ "${ENABLE_ADS}" = "true" ]; then
