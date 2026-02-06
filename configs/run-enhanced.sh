@@ -495,8 +495,8 @@ output.icecast(%mp3(bitrate=320), host="localhost", port=8000, password="${ICECA
 # OGG Vorbis
 output.icecast(%vorbis(quality=0.6), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.ogg", radio)
 
-# AAC (via ffmpeg)
-output.icecast(%fdkaac(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.aac", radio)
+# AAC (via ffmpeg - compatible with iOS/Android)
+output.icecast(%ffmpeg(format="adts", %audio(codec="aac", b="128k")), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.aac", radio)
 
 # OPUS
 output.icecast(%opus(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.opus", radio)
