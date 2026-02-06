@@ -51,13 +51,21 @@ log_info "Copying configuration files..."
 cp repo/configs/icecast.xml /mnt/server/icecast.xml
 cp repo/configs/ezstream.v1.xml /mnt/server/ezstream.xml
 cp repo/configs/radio.liq /mnt/server/radio.liq
+cp repo/configs/autodj.conf /mnt/server/autodj.conf
 cp repo/configs/run-enhanced.sh /mnt/server/run.sh
 chmod +x /mnt/server/run.sh
 
 log_info "Setting up directory structure..."
 mkdir -p /mnt/server/music
 mkdir -p /mnt/server/log
+mkdir -p /mnt/server/web
+mkdir -p /mnt/server/hls
+mkdir -p /mnt/server/recordings
+mkdir -p /mnt/server/playlists
 touch /mnt/server/playlist.m3u
+
+log_info "Installing modern web interface..."
+cp -r repo/web/* /mnt/server/web/
 
 # Optional features
 if [ "${ENABLE_ADS}" = "true" ]; then
