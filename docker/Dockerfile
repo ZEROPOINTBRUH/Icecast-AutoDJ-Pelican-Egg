@@ -13,7 +13,6 @@ RUN useradd -m -d /home/container -s /bin/bash container
 RUN apt-get update && apt-get install -y \
     icecast2 \
     liquidsoap \
-    liquidsoap-plugin-all \
     ezstream \
     madplay \
     lame \
