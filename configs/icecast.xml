@@ -234,7 +234,7 @@
              this example will redirect all requests for http://server:port/ to
              the status page
         -->
-        <alias source="/" destination="/status.xsl"/>
+        <alias source="/" destination="/index.html"/>
         <!-- The certificate file needs to contain both public and private part.
              Both should be PEM encoded.
         <ssl-certificate>/usr/share/icecast2/icecast.pem</ssl-certificate>
