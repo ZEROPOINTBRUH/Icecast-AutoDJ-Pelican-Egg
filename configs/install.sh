@@ -36,10 +36,16 @@ cd /mnt/server || exit 1
 log_info "Downloading AutoDJ-Extreme repository..."
 REPO_URL="${REPO_URL:-https://github.com/ZEROPOINTBRUH/AutoDJ-Extreme.git}"
 
-if ! git clone "$REPO_URL" repo 2>&1; then
+# Clear any existing repo to force fresh clone
+rm -rf repo
+
+if ! git clone --depth 1 "$REPO_URL" repo 2>&1; then
     log_error "Failed to clone repository"
     exit 1
 fi
+
+log_info "Repository cloned successfully"
+log_info "Latest commit: $(cd repo && git log -1 --oneline)"
 
 log_info "Copying configuration files..."
 cp repo/configs/icecast.xml /mnt/server/icecast.xml
