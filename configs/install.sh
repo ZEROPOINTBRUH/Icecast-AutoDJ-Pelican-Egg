@@ -55,6 +55,13 @@ cp repo/configs/autodj.conf /mnt/server/autodj.conf
 cp repo/configs/run-enhanced.sh /mnt/server/run.sh
 chmod +x /mnt/server/run.sh
 
+# Verify critical files exist
+if [ ! -f /mnt/server/radio.liq ]; then
+    log_error "Failed to copy radio.liq!"
+    exit 1
+fi
+log_success "radio.liq copied successfully ($(wc -c < /mnt/server/radio.liq) bytes)"
+
 log_info "Setting up directory structure..."
 mkdir -p /mnt/server/music
 mkdir -p /mnt/server/log

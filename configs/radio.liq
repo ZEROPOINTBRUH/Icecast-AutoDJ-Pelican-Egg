@@ -1,11 +1,11 @@
 #!/usr/bin/liquidsoap
+# AutoDJ-Extreme by @zeropointbruh | github.com/ZEROPOINTBRUH/AutoDJ-Extreme | ko-fi.com/zeropointbruh
 
-set("log.file",true)
-set("log.stdout",true)
-set("log.level",3)
+set("log.file.path", "/home/container/log/liquidsoap.log")
+set("log.level", 3)
 
 music = playlist("/home/container/playlist.m3u")
-radio = fallback(track_sensitive=false,[music,single("/usr/share/icecast2/web/status.xsl")])
+radio = mksafe(music)
 
-output.icecast(%mp3,host="localhost",port=8000,password="autodjpassword",mount="autodj.mp3",radio)
+output.icecast(%mp3(bitrate=128), host="localhost", port=8000, password="autodjpassword", mount="autodj.mp3", radio)
 
