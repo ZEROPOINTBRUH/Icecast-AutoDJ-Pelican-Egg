@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist Editor - AutoDJ Extreme</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .editor-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 32px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 32px;
+        }
+
+        .library-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .track-item {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .track-item:hover {
+            background: var(--accent-primary);
+            transform: translateX(4px);
+        }
+
+        .track-item.dragging {
+            opacity: 0.5;
+        }
+
+        .track-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .track-artist {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .playlist-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .playlist-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .playlist-tab {
+            padding: 12px 24px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .playlist-tab:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .playlist-tab.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .drop-area {
+            min-height: 400px;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .drop-area.dragover {
+            border-color: var(--accent-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .playlist-track {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: move;
+        }
+
+        .playlist-track:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .track-number {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .track-handle {
+            cursor: grab;
+            font-size: 20px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-pink);
+            transform: scale(1.1);
+        }
+
+        .save-btn {
+            padding: 12px 32px;
+            background: var(--accent-primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .save-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body style="background: var(--bg-primary); color: var(--text-primary); padding: 20px;">
+    <div style="max-width: 1400px; margin: 0 auto 20px;">
+        <a href="index.html" class="back-btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--bg-secondary); border-radius: 8px; color: var(--text-primary); text-decoration: none; font-weight: 600;">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div class="editor-container">
+        <!-- Music Library -->
+        <div class="library-panel">
+            <h3 style="margin-bottom: 16px;">🎵 Music Library</h3>
+            <input type="text" class="search-box" id="searchBox" placeholder="Search tracks...">
+            <div id="libraryTracks">
+                <!-- Demo tracks -->
+                <div class="track-item" draggable="true" data-track='{"name":"Summer Vibes","artist":"Cool Artist","duration":"3:45"}'>
+                    <div class="track-name">Summer Vibes</div>
+                    <div class="track-artist">Cool Artist • 3:45</div>
+                </div>
+                <div class="track-item" draggable="true" data-track='{"name":"Night Drive","artist":"Electronic Dreams","duration":"4:12"}'>
+                    <div class="track-name">Night Drive</div>
+                    <div class="track-artist">Electronic Dreams • 4:12</div>
+                </div>
+                <div class="track-item" draggable="true" data-track='{"name":"Chill Beats","artist":"Lo-Fi Master","duration":"3:20"}'>
+                    <div class="track-name">Chill Beats</div>
+                    <div class="track-artist">Lo-Fi Master • 3:20</div>
+                </div>
+                <div class="track-item" draggable="true" data-track='{"name":"Rock Anthem","artist":"The Rockers","duration":"5:30"}'>
+                    <div class="track-name">Rock Anthem</div>
+                    <div class="track-artist">The Rockers • 5:30</div>
+                </div>
+                <div class="track-item" draggable="true" data-track='{"name":"Jazz Night","artist":"Smooth Jazz Trio","duration":"6:15"}'>
+                    <div class="track-name">Jazz Night</div>
+                    <div class="track-artist">Smooth Jazz Trio • 6:15</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playlist Editor -->
+        <div class="playlist-panel">
+            <div class="playlist-header">
+                <h2>📝 Playlist Editor</h2>
+                <button class="save-btn" onclick="savePlaylist()">💾 Save Playlist</button>
+            </div>
+
+            <div class="playlist-tabs">
+                <button class="playlist-tab active" data-playlist="main">Main Playlist</button>
+                <button class="playlist-tab" data-playlist="morning">Morning</button>
+                <button class="playlist-tab" data-playlist="evening">Evening</button>
+                <button class="playlist-tab" data-playlist="night">Night</button>
+            </div>
+
+            <div class="drop-area" id="dropArea">
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">🎵</div>
+                    <div>Drag tracks here to build your playlist</div>
+                </div>
+                <div id="playlistTracks"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlaylist = 'main';
+        let playlists = {
+            main: [],
+            morning: [],
+            evening: [],
+            night: []
+        };
+
+        // Playlist tabs
+        document.querySelectorAll('.playlist-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.playlist-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentPlaylist = tab.dataset.playlist;
+                renderPlaylist();
+            });
+        });
+
+        // Drag and drop from library
+        document.querySelectorAll('.track-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('track', item.dataset.track);
+                item.classList.add('dragging');
+            });
+
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('dragging');
+            });
+        });
+
+        // Drop area
+        const dropArea = document.getElementById('dropArea');
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('dragover');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('dragover');
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('dragover');
+            
+            const trackData = e.dataTransfer.getData('track');
+            if (trackData) {
+                const track = JSON.parse(trackData);
+                playlists[currentPlaylist].push(track);
+                renderPlaylist();
+            }
+        });
+
+        function renderPlaylist() {
+            const container = document.getElementById('playlistTracks');
+            const emptyState = document.getElementById('emptyState');
+            const tracks = playlists[currentPlaylist];
+
+            if (tracks.length === 0) {
+                emptyState.style.display = 'block';
+                container.innerHTML = '';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            container.innerHTML = tracks.map((track, index) => `
+                <div class="playlist-track">
+                    <span class="track-handle">⋮⋮</span>
+                    <div class="track-number">${index + 1}</div>
+                    <div class="track-info">
+                        <div class="track-name">${track.name}</div>
+                        <div class="track-artist">${track.artist} • ${track.duration}</div>
+                    </div>
+                    <div class="track-actions">
+                        <button class="action-btn" onclick="moveUp(${index})" title="Move up">↑</button>
+                        <button class="action-btn" onclick="moveDown(${index})" title="Move down">↓</button>
+                        <button class="action-btn" onclick="removeTrack(${index})" title="Remove">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function moveUp(index) {
+            if (index === 0) return;
+            const tracks = playlists[currentPlaylist];
+            [tracks[index], tracks[index - 1]] = [tracks[index - 1], tracks[index]];
+            renderPlaylist();
+        }
+
+        function moveDown(index) {
+            const tracks = playlists[currentPlaylist];
+            if (index === tracks.length - 1) return;
+            [tracks[index], tracks[index + 1]] = [tracks[index + 1], tracks[index]];
+            renderPlaylist();
+        }
+
+        function removeTrack(index) {
+            playlists[currentPlaylist].splice(index, 1);
+            renderPlaylist();
+        }
+
+        function savePlaylist() {
+            // In production, this would send to API
+            const data = {
+                playlist: currentPlaylist,
+                tracks: playlists[currentPlaylist]
+            };
+
+            console.log('Saving playlist:', data);
+            alert(`✅ Playlist "${currentPlaylist}" saved with ${playlists[currentPlaylist].length} tracks!`);
+
+            // Actual implementation:
+            // fetch('/api/playlist/save', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(data)
+            // });
+        }
+
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.track-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>
