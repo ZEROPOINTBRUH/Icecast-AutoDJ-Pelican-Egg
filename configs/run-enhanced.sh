@@ -485,19 +485,19 @@ main() {
     fi
     log_success "Icecast started (PID: $ICECAST_PID)"
     
-    # Start ezstream
-    log_info "Starting ezstream..."
-    /usr/bin/ezstream -c "/home/container/ezstream.xml" &
-    EZSTREAM_PID=$!
+    # Start Liquidsoap
+    log_info "Starting Liquidsoap (advanced audio engine)..."
+    /usr/bin/liquidsoap /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_debug "liquidsoap: $line"; done &
+    LIQUIDSOAP_PID=$!
     
-    sleep 2
+    sleep 5
     
-    if ! kill -0 $EZSTREAM_PID 2>/dev/null; then
-        log_error "ezstream failed to start!"
+    if ! kill -0 $LIQUIDSOAP_PID 2>/dev/null; then
+        log_error "Liquidsoap failed to start!"
         kill $ICECAST_PID 2>/dev/null
         exit 1
     fi
-    log_success "ezstream started (PID: $EZSTREAM_PID)"
+    log_success "Liquidsoap started (PID: $LIQUIDSOAP_PID)"
     
     # Success banner
     echo ""
@@ -506,9 +506,13 @@ main() {
     print_box_text "RADIO STATION IS LIVE!" 80 "$GREEN$BOLD"
     print_box_line 80 "${BOX_VR}${BOX_VL}"
     print_box_text "" 80
-    print_box_text "Stream URL: http://YOUR_IP:PORT/autodj" 80 "$WHITE"
-    print_box_text "Admin Panel: http://YOUR_IP:PORT/admin" 80 "$WHITE"
-    print_box_text "Status Page: http://YOUR_IP:PORT/status.xsl" 80 "$WHITE"
+    print_box_text "MP3 128k:  http://YOUR_IP:PORT/autodj-128.mp3" 80 "$WHITE"
+    print_box_text "MP3 192k:  http://YOUR_IP:PORT/autodj-192.mp3" 80 "$WHITE"
+    print_box_text "OGG Vorbis: http://YOUR_IP:PORT/autodj.ogg" 80 "$WHITE"
+    print_box_text "AAC Stream: http://YOUR_IP:PORT/autodj.aac" 80 "$WHITE"
+    print_box_text "" 80
+    print_box_text "Admin Panel: http://YOUR_IP:PORT/admin/" 80 "$CYAN"
+    print_box_text "Status Page: http://YOUR_IP:PORT/status.xsl" 80 "$CYAN"
     print_box_text "" 80
     print_box_line 80 "${BOX_BL}${BOX_BR}"
     echo -e "${NC}"
@@ -524,7 +528,7 @@ main() {
     print_box_line 80 "${BOX_BL}${BOX_BR}"
     echo -e "${NC}"
     
-    log_access "Radio station went live with PIDs: Icecast=$ICECAST_PID, ezstream=$EZSTREAM_PID"
+    log_access "Radio station went live with PIDs: Icecast=$ICECAST_PID, Liquidsoap=$LIQUIDSOAP_PID"
     
     # Monitor processes
     log_info "Process monitoring active. Press Ctrl+C to stop."
@@ -538,11 +542,12 @@ main() {
             log_warn "Icecast restarted with PID: $ICECAST_PID"
         fi
         
-        if ! kill -0 $EZSTREAM_PID 2>/dev/null; then
-            log_error "ezstream process died! Attempting restart..."
-            /usr/bin/ezstream -c "/home/container/ezstream.xml" &
-            EZSTREAM_PID=$!
-            log_warn "ezstream restarted with PID: $EZSTREAM_PID"
+        if ! kill -0 $LIQUIDSOAP_PID 2>/dev/null; then
+            log_error "Liquidsoap process died! Attempting restart..."
+            /usr/bin/liquidsoap /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_debug "liquidsoap: $line"; done &
+            LIQUIDSOAP_PID=$!
+            sleep 3
+            log_warn "Liquidsoap restarted with PID: $LIQUIDSOAP_PID"
         fi
         
         sleep 30
@@ -550,7 +555,7 @@ main() {
 }
 
 # Trap signals for graceful shutdown
-trap 'log_info "Shutting down..."; kill $ICECAST_PID $EZSTREAM_PID 2>/dev/null; log_info "Shutdown complete"; exit 0' SIGTERM SIGINT
+trap 'log_info "Shutting down..."; kill $ICECAST_PID $LIQUIDSOAP_PID 2>/dev/null; log_info "Shutdown complete"; exit 0' SIGTERM SIGINT
 
 # Run main function
 main

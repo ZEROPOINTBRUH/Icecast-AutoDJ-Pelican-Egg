@@ -50,6 +50,7 @@ log_info "Latest commit: $(cd repo && git log -1 --oneline)"
 log_info "Copying configuration files..."
 cp repo/configs/icecast.xml /mnt/server/icecast.xml
 cp repo/configs/ezstream.v1.xml /mnt/server/ezstream.xml
+cp repo/configs/radio.liq /mnt/server/radio.liq
 cp repo/configs/run-enhanced.sh /mnt/server/run.sh
 chmod +x /mnt/server/run.sh
 
