@@ -492,16 +492,6 @@ thread.run(delay=3600.0, fun() -> log("[CREDIT] Powered by @zeropointbruh | ⭐ 
 EOF
     log_success "Liquidsoap config generated with source password from environment"
     
-    # Ensure Icecast web files exist (XSLT templates)
-    log_info "Ensuring Icecast web files are present..."
-    if [ ! -f /home/container/web/status.xsl ]; then
-        log_debug "Copying Icecast web files from /usr/share/icecast2/web/"
-        cp -n /usr/share/icecast2/web/*.xsl /home/container/web/ 2>/dev/null || true
-        cp -n /usr/share/icecast2/web/*.png /home/container/web/ 2>/dev/null || true
-        cp -n /usr/share/icecast2/web/*.jpg /home/container/web/ 2>/dev/null || true
-        cp -n /usr/share/icecast2/web/*.css /home/container/web/style.css.bak 2>/dev/null || true
-    fi
-    
     # Start Icecast
     log_info "Starting Icecast server..."
     /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_debug "icecast: $line"; done &

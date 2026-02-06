@@ -219,7 +219,8 @@
              be relative to the new root, not the original root -->
         <logdir>/home/container/log</logdir>
         <webroot>/home/container/web</webroot>
-        <adminroot>/home/container/web</adminroot>
+        <!-- adminroot uses Docker's default Icecast web files for XSLT templates -->
+        <adminroot>/usr/share/icecast2/web</adminroot>
         <!-- <pidfile>/home/container/icecast.pid</pidfile> -->
 
         <!-- Aliases: treat requests for 'source' path as being for 'dest' path
