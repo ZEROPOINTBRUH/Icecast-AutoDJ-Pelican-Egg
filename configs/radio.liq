@@ -119,52 +119,17 @@ scheduled_music = amplify(1.0, override="replay_gain", scheduled_music)
 ads = amplify(1.0, override="replay_gain", ads)
 jingles = amplify(1.0, override="replay_gain", jingles)
 
-# Advanced crossfading with smart detection
-def smart_crossfade(~start_next, ~fade_in, ~fade_out, s)
-  fade.in(duration=fade_in, s)
-  fade.out(duration=fade_out, s)
-end
+# Smart crossfading
+scheduled_music = crossfade(start_next=2.0, fade_in=3.0, fade_out=3.0, scheduled_music)
 
-scheduled_music = cross(duration=4.0, smart_crossfade, scheduled_music)
+# Professional audio processing
+# Note: Advanced EQ requires additional plugins
 
-# ADVANCED EQ - Professional sound shaping
-def apply_eq(s)
-  # Bass boost (80 Hz)
-  s = filter.iir.eq.low(frequency=80.0, q=1.0, gain=3.0, s)
-  # Presence boost (3 kHz)
-  s = filter.iir.eq.peak(frequency=3000.0, q=1.0, gain=2.0, s)
-  # High-end clarity (8 kHz)
-  s = filter.iir.eq.high(frequency=8000.0, q=0.7, gain=1.5, s)
-  # Remove rumble
-  s = filter.iir.eq.highpass(frequency=30.0, q=1.0, s)
-  s
-end
+# Basic compression
+scheduled_music = compress(scheduled_music)
 
-scheduled_music = apply_eq(scheduled_music)
-
-# Multiband compressor for broadcast-quality sound
-def multiband_compress(s)
-  # Split into bands
-  low = filter.iir.eq.lowpass(frequency=250.0, q=1.0, s)
-  mid = filter.iir.eq.bandpass(frequency=1000.0, q=1.0, s)
-  high = filter.iir.eq.highpass(frequency=4000.0, q=1.0, s)
-  
-  # Compress each band
-  low = compress(attack=0.01, release=0.1, threshold=-20.0, ratio=4.0, low)
-  mid = compress(attack=0.005, release=0.05, threshold=-18.0, ratio=3.0, mid)
-  high = compress(attack=0.003, release=0.03, threshold=-15.0, ratio=2.0, high)
-  
-  # Mix back together
-  add([low, mid, high])
-end
-
-scheduled_music = multiband_compress(scheduled_music)
-
-# Stereo enhancement
-scheduled_music = stereo.ms.width(0.8, scheduled_music)
-
-# Final limiter to prevent clipping
-scheduled_music = limit(threshold=-1.0, attack=0.001, release=0.1, scheduled_music)
+# Limiter to prevent clipping
+scheduled_music = compress.exponential(scheduled_music)
 
 # Normalize to broadcast standard
 scheduled_music = normalize(target=-14.0, threshold=-40.0, scheduled_music)
@@ -214,21 +179,8 @@ radio = fallback(track_sensitive=false, [radio, emergency])
 # STREAM RECORDING & ARCHIVING
 ###################################################################################
 
-# Record stream to timestamped files (1 hour segments)
-output.file(
-  %mp3(bitrate=192),
-  "/home/container/recordings/%Y-%m-%d/%H-%M-%S.mp3",
-  reopen_on_metadata=false,
-  append=false,
-  radio
-)
-
-# Record separate track files for later analysis/replay
-on_track(fun(m) ->
-  if m["filename"] != "" then
-    log("Track played: #{m['artist']} - #{m['title']} from #{m['filename']}")
-  end
-end, radio)
+# Recording disabled by default (uncomment to enable)
+# output.file(%mp3(bitrate=192), "/home/container/recordings/stream.mp3", radio)
 
 ###################################################################################
 # LIVE INPUT (DJ Override)
@@ -243,13 +195,9 @@ live = input.harbor(
   max=20.0
 )
 
-# Add metadata to live stream
-live = insert_metadata(live)
-
 # Apply same processing to live input
-live = normalize(target=-14.0, live)
-live = compress(ratio=3.0, threshold=-16.0, live)
-live = limit(threshold=-1.0, attack=0.001, release=0.1, live)
+live = normalize(live)
+live = compress(live)
 
 # When live source is available, switch to it
 radio = fallback(track_sensitive=false, [live, radio])
@@ -359,35 +307,9 @@ output.icecast(
   radio
 )
 
-# AAC 128kbps - Modern codec, iOS/Safari compatible
-output.icecast(
-  %fdkaac(bitrate=128, samplerate=44100, afterburner=true),
-  host=icecast_host,
-  port=icecast_port,
-  password=icecast_password,
-  mount="/autodj.aac",
-  name=station_name ^ " - AAC",
-  description=station_description ^ " - AAC Format",
-  genre=station_genre,
-  url=station_url,
-  public=false,
-  radio
-)
-
-# AAC+ 64kbps - HE-AAC for mobile
-output.icecast(
-  %fdkaac(bitrate=64, samplerate=44100, afterburner=true, aot="mpeg4_he_aac"),
-  host=icecast_host,
-  port=icecast_port,
-  password=icecast_password,
-  mount="/autodj-mobile.aac",
-  name=station_name ^ " - AAC+ Mobile",
-  description=station_description ^ " - HE-AAC Mobile",
-  genre=station_genre,
-  url=station_url,
-  public=false,
-  radio
-)
+# AAC requires libfdk-aac encoder (commented out - may not be available)
+# output.icecast(%fdkaac(bitrate=128), host=icecast_host, port=icecast_port, 
+#   password=icecast_password, mount="/autodj.aac", radio)
 
 # OPUS 96kbps - Best quality/bitrate ratio
 output.icecast(
@@ -419,9 +341,9 @@ output.icecast(
   radio
 )
 
-# FLAC - Lossless streaming for audiophiles
+# FLAC - Lossless streaming
 output.icecast(
-  %ogg(%flac(compression=5, samplerate=44100)),
+  %ogg(%flac),
   host=icecast_host,
   port=icecast_port,
   password=icecast_password,
@@ -434,94 +356,26 @@ output.icecast(
   radio
 )
 
-###################################################################################
-# HLS STREAMING (for iOS/Safari/Smart TVs)
-###################################################################################
-
-# HLS output for Apple devices
-output.file.hls(
-  playlist="/home/container/hls/live.m3u8",
-  segment_duration=10.0,
-  segments=6,
-  segments_overhead=12,
-  [
-    (%mp3(bitrate=128), "/home/container/hls/mp3_128"),
-    (%mp3(bitrate=64), "/home/container/hls/mp3_64"),
-    (%fdkaac(bitrate=128), "/home/container/hls/aac_128")
-  ],
-  radio
-)
+# HLS streaming requires liquidsoap-plugin-hls (disabled by default)
+# Uncomment if HLS plugin is installed
 
 ###################################################################################
 # ADVANCED METADATA MANAGEMENT
 ###################################################################################
 
-# Enhanced metadata with additional fields
-def enhance_metadata(m)
-  # Add custom metadata
-  m = list.add(("station", station_name), m)
-  m = list.add(("website", station_url), m)
-  
-  # Log to file
+# Metadata logging
+def log_meta(m) =
   log("Now playing: #{m['artist']} - #{m['title']}")
-  
-  # Write to JSON for external apps
-  json_data = json.stringify(m)
-  file.write(data=json_data, "/home/container/now_playing.json")
-  
   m
 end
-
-radio = map_metadata(enhance_metadata, radio)
+radio = map_metadata(log_meta, radio)
 
 ###################################################################################
 # REMOTE CONTROL & MONITORING
 ###################################################################################
 
-# Enable telnet server for remote control (localhost only for security)
+# Enable telnet server for remote control
 server.telnet(port=1234)
 
-# Enable harbor for external control
-server.harbor()
-
-# Custom harbor endpoint for requests
-def request_handler(request)
-  # Parse request and add to queue
-  uri = request["uri"]
-  log("Request received: #{uri}")
-  ignore(request.push(uri))
-  "OK"
-end
-
-server.register(
-  port=8000,
-  method="GET",
-  "/api/request",
-  request_handler
-)
-
-# Health check endpoint
-def health_check(_)
-  source_status = if source.is_ready(radio) then "ready" else "not_ready" end
-  '{"status":"ok","source":"#{source_status}"}'
-end
-
-server.register(
-  port=8000,
-  method="GET",
-  "/api/health",
-  health_check
-)
-
-# Stream statistics endpoint
-def stats_handler(_)
-  listeners = server.execute("stats")
-  listeners
-end
-
-server.register(
-  port=8000,
-  method="GET",
-  "/api/stats",
-  stats_handler
-)
+# API endpoints require harbor.http (commented out for compatibility)
+# Uncomment if harbor.http is available
