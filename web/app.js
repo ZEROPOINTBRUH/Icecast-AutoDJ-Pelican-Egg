@@ -130,6 +130,8 @@ async function updateNowPlaying() {
 
 function updateFromIcecastStats() {
     // Try multiple endpoints to get stream status
+    // Note: These endpoints are optional - the stream works without them
+    // The 404 errors are expected if Icecast isn't exposing the status endpoint
     const endpoints = [
         '/status-json.xsl',
         '/admin/stats.json',
@@ -139,11 +141,12 @@ function updateFromIcecastStats() {
     const tryEndpoint = (index) => {
         if (index >= endpoints.length) {
             // All endpoints failed, show offline status
-            console.warn('All Icecast status endpoints unavailable');
-            document.getElementById('trackTitle').textContent = 'Stream Status: Checking...';
-            document.getElementById('trackArtist').textContent = 'Endpoints not available';
+            // This is normal if Icecast isn't configured to expose stats
+            console.debug('All Icecast status endpoints unavailable - this is OK, stream may still be working');
+            document.getElementById('trackTitle').textContent = 'AutoDJ Stream Active';
+            document.getElementById('trackArtist').textContent = 'Stats unavailable - listening to stream...';
             const statusDot = document.querySelector('.status-dot');
-            if (statusDot) statusDot.style.background = '#f83062';
+            if (statusDot) statusDot.style.background = '#ffa500'; // Orange = working but no stats
             return;
         }
         
@@ -180,7 +183,7 @@ function updateFromIcecastStats() {
                 }
             })
             .catch(err => {
-                console.debug(`Endpoint ${endpoints[index]} failed:`, err);
+                console.debug(`Endpoint ${endpoints[index]} failed:`, err.message);
                 // Try next endpoint
                 tryEndpoint(index + 1);
             });
