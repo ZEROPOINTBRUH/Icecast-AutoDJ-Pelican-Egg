@@ -235,6 +235,8 @@
              the status page
         -->
         <alias source="/" destination="/index.html"/>
+        <!-- Status endpoints -->
+        <alias source="/status-json.xsl" destination="/status-json.xsl"/>
         <!-- The certificate file needs to contain both public and private part.
              Both should be PEM encoded.
         <ssl-certificate>/usr/share/icecast2/icecast.pem</ssl-certificate>

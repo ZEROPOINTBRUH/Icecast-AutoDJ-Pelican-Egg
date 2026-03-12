@@ -130,7 +130,15 @@ async function updateNowPlaying() {
 
 function updateFromIcecastStats() {
     fetch('/status-json.xsl')
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.text();
+        })
+        .then(text => {
+            // Handle empty response
+            if (!text || text.trim() === '') throw new Error('Empty response');
+            return JSON.parse(text);
+        })
         .then(data => {
             const source = data.icestats?.source;
             if (source) {
@@ -175,8 +183,12 @@ function updateTrackDisplay(data) {
 async function updateStats() {
     try {
         const response = await fetch('/status-json.xsl');
-        const data = await response.json();
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
+        const text = await response.text();
+        if (!text || text.trim() === '') throw new Error('Empty response');
+        
+        const data = JSON.parse(text);
         const stats = data.icestats;
         if (!stats) return;
         
