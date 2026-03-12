@@ -487,7 +487,7 @@ set("log.level", 3)
 music = playlist("/home/container/playlist.m3u")
 radio = mksafe(music)
 
-output.icecast(%mp3(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj.mp3", radio)
+output.icecast(%mp3(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", radio)
 EOF
     
     log_success "Liquidsoap config generated"
