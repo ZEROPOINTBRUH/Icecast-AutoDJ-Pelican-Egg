@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  autodj:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: autodj-extreme
+    image: zeropointbruh/autodj-extreme:latest
+    
+    # Port mappings
+    ports:
+      - "8000:8000"  # Icecast streaming port
+    
+    # Environment variables
+    environment:
+      # Station Configuration
+      STATION_NAME: "AutoDJ-Extreme"
+      STATION_DESCRIPTION: "Enhanced Icecast Radio with AutoDJ"
+      STATION_LOCATION: "Earth"
+      STATION_GENRE: "Variety"
+      STATION_URL: "http://localhost:8000"
+      
+      # Security & Passwords
+      SOURCE_PASSWORD: "autodjpassword123"
+      RELAY_PASSWORD: "relaypassword123"
+      ADMIN_USER: "admin"
+      ADMIN_PASSWORD: "adminpassword123"
+      
+      # Icecast Configuration
+      ICECAST_HOST: "localhost"
+      ICECAST_PORT: "8000"
+      ICECAST_MAX_CLIENTS: "100"
+      ICECAST_BURST_SIZE: "65536"
+      
+      # Stream Settings
+      AUTODJ_MOUNT: "/autodj"
+      AUTODJ_PUBLIC: "1"
+      AUTODJ_PASSWORD: "autodjpassword123"
+      MP3_BITRATE: "192"
+      
+      # Audio Processing
+      ENABLE_ADS: "0"
+      AD_FREQUENCY: "3"
+      ENABLE_JINGLES: "0"
+      JINGLE_FREQUENCY: "5"
+      
+      # Directories
+      MUSIC_DIR: "/home/container/music"
+      PLAYLIST_DIR: "/home/container/playlists"
+      ADS_DIR: "/home/container/ads"
+      JINGLES_DIR: "/home/container/jingles"
+      LOG_DIR: "/home/container/log"
+      
+      # Logging
+      LOG_LEVEL: "3"
+      
+      # Update Configuration (set to 'true' to clean configs on startup)
+      UPDATE_CONFIGS: "false"
+    
+    # Volume mounts - persistent storage
+    volumes:
+      # Music library (preserved on updates)
+      - ./music:/home/container/music
+      
+      # Playlists (preserved on updates)
+      - ./playlists:/home/container/playlists
+      
+      # Ads directory
+      - ./ads:/home/container/ads
+      
+      # Jingles directory
+      - ./jingles:/home/container/jingles
+      
+      # Logs
+      - ./logs:/home/container/log
+      
+      # Configurations
+      - ./configs:/home/container/configs
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/status-json.xsl", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Network settings
+    networks:
+      - autodj-network
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named network for the service
+networks:
+  autodj-network:
+    driver: bridge

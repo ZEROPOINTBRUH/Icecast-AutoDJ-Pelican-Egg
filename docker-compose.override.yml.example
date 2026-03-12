@@ -1,0 +1,37 @@
+# docker-compose.override.yml - Local Development Overrides
+# This file is automatically loaded by docker-compose and is NOT committed to git
+# Use this for local development settings that override docker-compose.yml
+
+# To use:
+# 1. Copy this file to docker-compose.override.yml in your project root
+# 2. Customize the settings below
+# 3. Run: docker-compose up -d
+
+version: '3.8'
+
+services:
+  autodj:
+    # Increase resource limits for development/testing
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1024M
+        reservations:
+          cpus: '1'
+          memory: 512M
+    
+    # Mount your local development files
+    volumes:
+      # Override config generation with local scripts (optional)
+      - ./scripts:/home/container/scripts
+    
+    # Enable debug logging
+    environment:
+      LOG_LEVEL: "4"
+      UPDATE_CONFIGS: "false"
+    
+    # Additional ports for debugging (optional)
+    ports:
+      - "8000:8000"    # Icecast
+      - "9999:9999"    # Future admin interface
