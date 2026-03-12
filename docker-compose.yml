@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     container_name: autodj-extreme
-    image: icecast-autodj:latest
+    image: ghcr.io/zeropointbruh/icecast-autodj:latest
     
     # Port mappings
     ports:
