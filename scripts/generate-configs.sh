@@ -339,7 +339,8 @@ def on_track_change(m) =
 end
 
 # Initialize with safety wrapper and track logging
-radio = on_metadata(on_track_change, mksafe(music))
+radio = mksafe(music)
+radio = metadata.on_change(on_track_change, radio)
 
 # Output to Icecast with environment-configured credentials
 output.icecast(
