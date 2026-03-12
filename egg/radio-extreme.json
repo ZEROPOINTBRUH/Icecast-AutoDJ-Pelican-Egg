@@ -160,9 +160,9 @@
         },
         {
             "name": "Max Clients",
-            "description": "Maximum concurrent listeners (0 = unlimited)",
+            "description": "Maximum concurrent listeners",
             "env_variable": "MAX_CLIENTS",
-            "default_value": "0",
+            "default_value": "1000",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|integer|min:0|max:100000",

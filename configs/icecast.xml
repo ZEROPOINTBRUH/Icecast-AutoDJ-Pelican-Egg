@@ -14,7 +14,7 @@
     -->
 
     <limits>
-        <clients>0</clients>
+        <clients>1000</clients>
         <sources>10</sources>
         <queue-size>524288</queue-size>
         <client-timeout>30</client-timeout>
@@ -192,7 +192,7 @@
     <mount type="normal">
         <mount-name>/autodj</mount-name>
         <password>autodjpassword123</password>
-        <max-listeners>0</max-listeners>
+        <max-listeners>1000</max-listeners>
         <public>1</public>
     </mount>
 
