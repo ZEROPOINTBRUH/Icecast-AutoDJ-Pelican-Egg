@@ -5,7 +5,7 @@
                         <hostname>localhost</hostname>
                         <port>8000</port>
                         <user>source</user>
-                        <password>autodjpassword</password>
+                        <password>autodjpassword123</password>
                         <reconnect_attempts>0</reconnect_attempts>
                 </server>
         </servers>

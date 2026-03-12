@@ -1,9 +1,9 @@
 <ezstream>
         <url>http://localhost:8000/autodj</url>
         <sourceuser>source</sourceuser>
-        <sourcepassword>autodjpassword</sourcepassword>
+        <sourcepassword>autodjpassword123</sourcepassword>
         <format>MP3</format>
-        <filename>/etc/ezstream/playlist.m3u</filename>
+        <filename>/home/container/playlist.m3u</filename>
         <playlist_program>0</playlist_program>
         <shuffle>1</shuffle>
         <!--<metadata_progname></metadata_progname>-->
