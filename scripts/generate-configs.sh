@@ -1,8 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# AutoDJ-Extreme Configuration Generator
-# Extreme Edition v2.0
+# Enhanced AutoDJ Configuration Generator v2.0
 # 
 # This script generates all configuration files from environment variables,
 # ensuring consistency across Icecast, Liquidsoap, ezstream, and Web UI.
@@ -315,8 +314,7 @@ echo -e "${CYAN}Generating radio.liq...${NC}"
 
 cat > "${CONFIG_DIR}/radio.liq" << 'EOF'
 #!/usr/bin/liquidsoap
-# AutoDJ-Extreme Liquidsoap Configuration
-# Extreme Edition v2.0 - AUTO-GENERATED from environment variables
+# Enhanced AutoDJ Liquidsoap Configuration - AUTO-GENERATED
 
 # Logging configuration
 set("log.file.path", "LOG_DIR_VAR/liquidsoap.log")
@@ -352,12 +350,7 @@ output.icecast(
     mount="/autodj",
     radio
 )
-
-# Hourly credit message
-thread.run(
-    delay=3600.0,
-    fun() -> log("[CREDIT] Powered by @zeropointbruh | github.com/ZEROPOINTBRUH/AutoDJ-Extreme")
-)
+EOF
 EOF
 
 # Replace variables in radio.liq

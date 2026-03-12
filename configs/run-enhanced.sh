@@ -2,8 +2,6 @@
 
 ###################################################################################
 # Enhanced Icecast AutoDJ Run Script - Extreme Edition v2.0
-# Created by: @zeropointbruh (wegj1@hotmail.com)
-# Website: https://banabyte.com
 # 
 # Features:
 # - 11+ audio format support (MP3, OGG, OPUS, FLAC, M4A, WAV, AAC, WMA, AIFF, APE, ALAC)
@@ -140,12 +138,6 @@ print_banner() {
     print_box_line $width "${BOX_TL}${BOX_TR}"
     print_box_text "" $width
     print_box_text "Enhanced Icecast AutoDJ - EXTREME EDITION v2.0" $width "$MAGENTA$BOLD"
-    print_box_text "" $width
-    print_box_line $width "${BOX_VR}${BOX_VL}"
-    print_box_text "" $width
-    print_box_text "Created by: @zeropointbruh" $width "$CYAN"
-    print_box_text "Email: wegj1@hotmail.com" $width "$CYAN"
-    print_box_text "Website: https://banabyte.com" $width "$CYAN"
     print_box_text "" $width
     print_box_line $width "${BOX_BL}${BOX_BR}"
     echo -e "${NC}"
@@ -482,8 +474,7 @@ main() {
     # Includes on_metadata callback for track change logging
     cat > /home/container/radio.liq << EOF
 #!/usr/bin/liquidsoap
-# AutoDJ-Extreme by @zeropointbruh
-# Single port configuration - all services on port ${ICECAST_STREAM_PORT}
+# Enhanced AutoDJ - Single port configuration
 
 set("log.file.path", "/home/container/log/liquidsoap.log")
 set("log.level", 3)
@@ -560,17 +551,6 @@ EOF
     print_box_text "" 80
     print_box_text "Admin Panel: http://${SERVER_IP}:${SERVER_PORT}/admin/" 80 "$CYAN"
     print_box_text "" 80
-    print_box_line 80 "${BOX_BL}${BOX_BR}"
-    echo -e "${NC}"
-    
-    # Attribution
-    echo -e "${MAGENTA}"
-    print_box_line 80 "${BOX_TL}${BOX_TR}"
-    print_box_text "Created by @zeropointbruh" 80 "$CYAN"
-    print_box_text "Email: wegj1@hotmail.com | Discord: @zeropointbruh" 80 "$CYAN"
-    print_box_text "Website: https://banabyte.com" 80 "$CYAN"
-    print_box_text "" 80
-    print_box_text "Commercial use? See ATTRIBUTION.md for credit requirements" 80 "$YELLOW"
     print_box_line 80 "${BOX_BL}${BOX_BR}"
     echo -e "${NC}"
     

@@ -1,6 +1,5 @@
 FROM ubuntu:24.04
 
-LABEL maintainer="zeropointbruh <wegj1@hotmail.com>"
 LABEL description="Enhanced Icecast AutoDJ Radio Server with multi-playlist, ads, and jingle support"
 LABEL version="2.1"
 
