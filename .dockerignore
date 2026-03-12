@@ -1,0 +1,69 @@
+# .dockerignore - Files excluded from Docker build context
+
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation (not needed in container)
+*.md
+docs/
+LICENSE
+SECURITY.md
+ATTRIBUTION.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Node/npm files
+node_modules/
+npm-debug.log
+yarn.lock
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+
+# Docker files (not needed in image)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Development files
+.env.docker
+.env.example
+.env.defaults
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Temp files
+*.tmp
+*.log
+.DS_Store
+
+# User data directories (these are volumes at runtime)
+music/
+playlists/
+ads/
+jingles/
+logs/
+configs/
+
+# Egg/Panel files (only needed for deployment, not in container)
+egg/
+
+# System files
+*.bak
+*.swp
