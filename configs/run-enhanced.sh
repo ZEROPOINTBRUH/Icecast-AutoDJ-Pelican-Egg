@@ -495,11 +495,9 @@ EOF
     
     log_success "Liquidsoap config generated (port: ${ICECAST_STREAM_PORT}, bitrate: ${ICECAST_STREAM_BITRATE}kbps)"
     
-    # Copy Icecast XSL files to webroot (required for status-json.xsl endpoint)
-    log_info "Setting up Icecast status endpoints..."
-    cp -n /usr/share/icecast2/web/*.xsl /home/container/web/ 2>/dev/null || true
-    cp -n /usr/share/icecast2/web/*.png /home/container/web/ 2>/dev/null || true
-    cp -n /usr/share/icecast2/web/*.ico /home/container/web/ 2>/dev/null || true
+    # Icecast uses its default web files from /usr/share/icecast2/web
+    # No need to copy files - webroot points directly to default location
+    log_info "Using default Icecast web interface from /usr/share/icecast2/web"
     
     # Start Icecast
     log_info "Starting Icecast server..."

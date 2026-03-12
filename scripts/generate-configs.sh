@@ -260,12 +260,12 @@ cat > "${CONFIG_DIR}/icecast.xml" << 'EOF'
         <mime type="audio/wav">.wav</mime>
     </mime-types>
 
-    <!-- Webroot Configuration -->
+    <!-- Webroot Configuration - uses default Icecast web files -->
     <paths>
-        <basedir>/usr/share/icecast</basedir>
+        <basedir>/usr/share/icecast2</basedir>
         <logdir>LOG_DIR_VAR</logdir>
-        <webroot>/var/www/icecast</webroot>
-        <adminroot>/usr/share/icecast/admin</adminroot>
+        <webroot>/usr/share/icecast2/web</webroot>
+        <adminroot>/usr/share/icecast2/admin</adminroot>
         <alias source="/" destination="/status.xsl"/>
     </paths>
 
