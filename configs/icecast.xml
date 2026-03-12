@@ -14,7 +14,7 @@
     -->
 
     <limits>
-        <clients>100</clients>
+        <clients>0</clients>
         <sources>10</sources>
         <queue-size>524288</queue-size>
         <client-timeout>30</client-timeout>
@@ -192,6 +192,7 @@
     <mount type="normal">
         <mount-name>/autodj</mount-name>
         <password>autodjpassword123</password>
+        <max-listeners>0</max-listeners>
         <public>1</public>
     </mount>
 
@@ -244,7 +245,7 @@
         <accesslog>access.log</accesslog>
         <errorlog>error.log</errorlog>
         <!-- <playlistlog>playlist.log</playlistlog> -->
-        <loglevel>3</loglevel> <!-- 4 Debug, 3 Info, 2 Warn, 1 Error -->
+        <loglevel>4</loglevel> <!-- 4 Debug, 3 Info, 2 Warn, 1 Error -->
         <logsize>10000</logsize> <!-- Max size of a logfile -->
         <!-- If logarchive is enabled (1), then when logsize is reached
              the logfile will be moved to [error|access|playlist].log.DATESTAMP,

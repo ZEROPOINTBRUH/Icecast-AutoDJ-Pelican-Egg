@@ -479,6 +479,7 @@ main() {
     ICECAST_STREAM_BITRATE="${MP3_BITRATE:-128}"
     
     # Create simple working config - single port, Pelican Panel compatible
+    # Includes on_track callback for track change logging
     cat > /home/container/radio.liq << EOF
 #!/usr/bin/liquidsoap
 # AutoDJ-Extreme by @zeropointbruh
@@ -488,7 +489,17 @@ set("log.file.path", "/home/container/log/liquidsoap.log")
 set("log.level", 3)
 
 music = playlist("/home/container/playlist.m3u")
-radio = mksafe(music)
+
+# Log track changes to a dedicated file for the monitor to pick up
+def on_track_change(m) =
+  title = m["title"]
+  artist = m["artist"]
+  filename = m["filename"]
+  log("NOW PLAYING: #{artist} - #{title} [#{filename}]")
+  system("echo \"\$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{filename}]\" >> /home/container/log/track-history.log")
+end
+
+radio = on_track(on_track_change, mksafe(music))
 
 output.icecast(%mp3(bitrate=${ICECAST_STREAM_BITRATE}), host="localhost", port=${ICECAST_STREAM_PORT}, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", radio)
 EOF
@@ -501,7 +512,7 @@ EOF
     
     # Start Icecast
     log_info "Starting Icecast server..."
-    /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_debug "icecast: $line"; done &
+    /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_info "icecast: $line"; done &
     ICECAST_PID=$!
     
     sleep 5
@@ -519,7 +530,7 @@ EOF
     log_debug "Config file size: $(wc -c < /home/container/radio.liq 2>/dev/null || echo '0') bytes"
     log_debug "Config file content:"
     cat /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_debug "  $line"; done
-    /usr/bin/liquidsoap /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_debug "liquidsoap: $line"; done &
+    /usr/bin/liquidsoap /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_info "liquidsoap: $line"; done &
     LIQUIDSOAP_PID=$!
     
     sleep 5
@@ -565,13 +576,55 @@ EOF
     
     log_access "Radio station went live with PIDs: Icecast=$ICECAST_PID, Liquidsoap=$LIQUIDSOAP_PID"
     
+    # ═══════════════════════════════════════════════════════════════════════════
+    # TRACK CHANGE MONITOR - watches Liquidsoap track history log
+    # ═══════════════════════════════════════════════════════════════════════════
+    touch /home/container/log/track-history.log
+    (
+        tail -F /home/container/log/track-history.log 2>/dev/null | while IFS= read -r line; do
+            echo -e "${CYAN}${BOLD}[TRACK]${NC} ${WHITE}${line}${NC}"
+        done
+    ) &
+    TRACK_MONITOR_PID=$!
+    log_info "Track change monitor started (PID: $TRACK_MONITOR_PID)"
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # LISTENER MONITOR - watches Icecast access log for connections
+    # ═══════════════════════════════════════════════════════════════════════════
+    touch /home/container/log/access.log
+    (
+        tail -F /home/container/log/access.log 2>/dev/null | while IFS= read -r line; do
+            if echo "$line" | grep -qi "autodj"; then
+                echo -e "${GREEN}${BOLD}[LISTENER]${NC} ${WHITE}${line}${NC}"
+            fi
+        done
+    ) &
+    LISTENER_MONITOR_PID=$!
+    log_info "Listener monitor started (PID: $LISTENER_MONITOR_PID)"
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ICECAST ERROR LOG MONITOR - watches for warnings/errors
+    # ═══════════════════════════════════════════════════════════════════════════
+    touch /home/container/log/error.log
+    (
+        tail -F /home/container/log/error.log 2>/dev/null | while IFS= read -r line; do
+            if echo "$line" | grep -qi "error\|warn"; then
+                echo -e "${YELLOW}${BOLD}[ICECAST]${NC} ${YELLOW}${line}${NC}"
+            elif echo "$line" | grep -qi "connection\|listener\|client"; then
+                echo -e "${GREEN}${BOLD}[ICECAST]${NC} ${WHITE}${line}${NC}"
+            fi
+        done
+    ) &
+    ICECAST_LOG_MONITOR_PID=$!
+    log_info "Icecast log monitor started (PID: $ICECAST_LOG_MONITOR_PID)"
+    
     # Monitor processes
     log_info "Process monitoring active. Press Ctrl+C to stop."
     
     while true; do
         if ! kill -0 $ICECAST_PID 2>/dev/null; then
             log_error "Icecast process died! Attempting restart..."
-            /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_debug "icecast: $line"; done &
+            /usr/bin/icecast2 -c "/home/container/icecast.xml" 2>&1 | while IFS= read -r line; do log_info "icecast: $line"; done &
             ICECAST_PID=$!
             sleep 3
             log_warn "Icecast restarted with PID: $ICECAST_PID"
@@ -579,7 +632,7 @@ EOF
         
         if ! kill -0 $LIQUIDSOAP_PID 2>/dev/null; then
             log_error "Liquidsoap process died! Attempting restart..."
-            /usr/bin/liquidsoap /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_debug "liquidsoap: $line"; done &
+            /usr/bin/liquidsoap /home/container/radio.liq 2>&1 | while IFS= read -r line; do log_info "liquidsoap: $line"; done &
             LIQUIDSOAP_PID=$!
             sleep 3
             log_warn "Liquidsoap restarted with PID: $LIQUIDSOAP_PID"
@@ -590,7 +643,7 @@ EOF
 }
 
 # Trap signals for graceful shutdown
-trap 'log_info "Shutting down..."; kill $ICECAST_PID $LIQUIDSOAP_PID 2>/dev/null; log_info "Shutdown complete"; exit 0' SIGTERM SIGINT
+trap 'log_info "Shutting down..."; kill $ICECAST_PID $LIQUIDSOAP_PID $TRACK_MONITOR_PID $LISTENER_MONITOR_PID $ICECAST_LOG_MONITOR_PID 2>/dev/null; log_info "Shutdown complete"; exit 0' SIGTERM SIGINT
 
 # Run main function
 main

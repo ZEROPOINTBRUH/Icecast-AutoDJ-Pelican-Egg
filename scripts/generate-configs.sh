@@ -70,7 +70,7 @@ export STREAM_PASSWORD="${STREAM_PASSWORD:-streampassword123}"
 
 export ICECAST_HOST="${ICECAST_HOST:-localhost}"
 export ICECAST_PORT="${ICECAST_PORT:-8000}"
-export ICECAST_MAX_CLIENTS="${ICECAST_MAX_CLIENTS:-1000}"
+export ICECAST_MAX_CLIENTS="${ICECAST_MAX_CLIENTS:-0}"
 export ICECAST_BURST_SIZE="${ICECAST_BURST_SIZE:-65535}"
 
 # Single port only - Icecast serves everything on ICECAST_PORT (default 8000)
@@ -201,7 +201,7 @@ cat > "${CONFIG_DIR}/icecast.xml" << 'EOF'
     <logging>
         <accesslog>LOG_DIR_VAR/access.log</accesslog>
         <errorlog>LOG_DIR_VAR/error.log</errorlog>
-        <loglevel>3</loglevel>
+        <loglevel>4</loglevel>
         <logsize>10000</logsize>
     </logging>
 
@@ -221,6 +221,7 @@ cat > "${CONFIG_DIR}/icecast.xml" << 'EOF'
     <mount type="normal">
         <mount-name>/autodj</mount-name>
         <password>AUTODJ_PASSWORD_VAR</password>
+        <max-listeners>0</max-listeners>
         <public>AUTODJ_PUBLIC_VAR</public>
     </mount>
 
@@ -465,7 +466,7 @@ STREAM_PASSWORD=streampassword123
 
 ICECAST_HOST=localhost
 ICECAST_PORT=8000
-ICECAST_MAX_CLIENTS=1000
+ICECAST_MAX_CLIENTS=0
 ICECAST_BURST_SIZE=65535
 
 # Note: Only ONE port is used. Icecast serves streams, admin, and status pages.
@@ -538,7 +539,7 @@ STREAM_PASSWORD=streampassword123
 
 ICECAST_HOST=localhost
 ICECAST_PORT=8000
-ICECAST_MAX_CLIENTS=1000
+ICECAST_MAX_CLIENTS=0
 ICECAST_BURST_SIZE=65535
 
 AUTODJ_PUBLIC=1
