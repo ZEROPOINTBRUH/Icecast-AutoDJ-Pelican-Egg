@@ -81,7 +81,7 @@ class AuthSystem {
     }
 }
 
-// Glob auth instance
+// Global auth instance
 const auth = new AuthSystem();
 
 // Show/hide login modal
@@ -177,6 +177,7 @@ function updateUIForAuth() {
 
 // Initialize auth on page load
 document.addEventListener('DOMContentLoaded', () => {
+    // Update UI based on auth state (but don't force login)
     updateUIForAuth();
     
     // Add event listeners
@@ -208,6 +209,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideLoginModal();
             }
         });
+    }
+    
+    // Ensure login modal starts hidden (public access)
+    if (modal) {
+        modal.classList.add('hidden');
     }
 });
 
