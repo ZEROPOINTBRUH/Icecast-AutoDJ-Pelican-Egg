@@ -35,45 +35,52 @@ A streamlined, production-ready Icecast radio server powered by Liquidsoap. Defa
 - **Scalable**: Handles thousands of listeners
 - **Reliable**: Auto-recovery if processes fail
 
-## 🚀 Quick Start (5 Minutes)
+## 🚀 Quick Start (5 Minutes) - Docker Compose
 
-### 1. Clone & Configure
+### 1. Prerequisites
+- Docker Desktop installed (v29.2.1+)
+- 512MB free memory
+- Port 8000 available
+
+### 2. Setup
 
 ```bash
+# Clone repository
 git clone https://github.com/ZEROPOINTBRUH/AutoDJ-Extreme.git
 cd AutoDJ-Extreme
-cp .env.example .env
-nano .env  # Edit with your settings
-```
 
-### 2. Add Music
+# Create directories
+mkdir -p music playlists ads jingles logs configs
 
-```bash
-mkdir music
+# Add your music files
 cp /path/to/your/music/*.mp3 music/
 ```
 
-### 3. Start
+### 3. Start Services
 
 ```bash
-# Docker Compose (recommended)
+# Using docker-compose (recommended)
 docker-compose up -d
 
-# Or systemd
-./scripts/generate-configs.sh
-sudo cp configs/icecast.xml /etc/icecast2/
-sudo systemctl restart icecast2
+# Or customize via .env first
+cp .env.docker .env
+nano .env
+docker-compose up -d
 ```
 
-### 4. Stream
+### 4. Access Your Stream
 
-```
-http://localhost:8000/autodj.mp3       # Stream
-http://localhost:8000/status.xsl        # Status
-http://localhost:8000/admin/            # Admin
-```
+- **Stream URL**: `http://localhost:8000/autodj`
+- **Icecast Web**: `http://localhost:8000`
+- **Admin Panel**: `http://localhost:8000/admin`
+- **Status JSON**: `http://localhost:8000/status-json.xsl`
 
-Done! Your radio station is live.
+### ✨ That's It! Your radio station is live!
+
+**For detailed setup, see:**
+- 📖 [Docker Compose Quick Reference](DOCKER_COMPOSE_QUICK.md)
+- 📚 [Complete Docker Compose Guide](DOCKER_COMPOSE_GUIDE.md)
+- ⚙️ [Configuration Reference](ENVIRONMENT_CONFIG.md)
 
 ## Can I Advertise on It?
 Yes. Make money on it if you want.
