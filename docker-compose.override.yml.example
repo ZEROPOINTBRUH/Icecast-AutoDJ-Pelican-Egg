@@ -33,5 +33,4 @@ services:
     
     # Additional ports for debugging (optional)
     ports:
-      - "8000:8000"    # Icecast
-      - "9999:9999"    # Future admin interface
+      - "8000:8000"    # Icecast (single port for everything)

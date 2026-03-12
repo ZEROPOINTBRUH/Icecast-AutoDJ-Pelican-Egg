@@ -73,8 +73,8 @@ export ICECAST_PORT="${ICECAST_PORT:-8000}"
 export ICECAST_MAX_CLIENTS="${ICECAST_MAX_CLIENTS:-1000}"
 export ICECAST_BURST_SIZE="${ICECAST_BURST_SIZE:-65535}"
 
-export WEB_HOST="${WEB_HOST:-0.0.0.0}"
-export WEB_PORT="${WEB_PORT:-8080}"
+# Single port only - Icecast serves everything on ICECAST_PORT (default 8000)
+# No separate web server port needed
 
 export AUTODJ_PUBLIC="${AUTODJ_PUBLIC:-1}"
 export LIVE_PUBLIC="${LIVE_PUBLIC:-0}"
@@ -150,9 +150,8 @@ validate_password "$AUTODJ_PASSWORD" "AUTODJ_PASSWORD" || VALIDATION_FAILED=1
 validate_password "$LIVE_PASSWORD" "LIVE_PASSWORD" || VALIDATION_FAILED=1
 validate_password "$STREAM_PASSWORD" "STREAM_PASSWORD" || VALIDATION_FAILED=1
 
-# Validate ports
+# Validate ports (single port only - Pelican Panel compatible)
 validate_port "$ICECAST_PORT" "ICECAST_PORT" || VALIDATION_FAILED=1
-validate_port "$WEB_PORT" "WEB_PORT" || VALIDATION_FAILED=1
 
 echo ""
 
@@ -461,7 +460,7 @@ LIVE_PASSWORD=livepassword123
 STREAM_PASSWORD=streampassword123
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 📡 NETWORK CONFIGURATION
+# 📡 NETWORK CONFIGURATION (SINGLE PORT - Pelican Panel Compatible)
 # ═══════════════════════════════════════════════════════════════════════════
 
 ICECAST_HOST=localhost
@@ -469,8 +468,7 @@ ICECAST_PORT=8000
 ICECAST_MAX_CLIENTS=1000
 ICECAST_BURST_SIZE=65535
 
-WEB_HOST=0.0.0.0
-WEB_PORT=8080
+# Note: Only ONE port is used. Icecast serves streams, admin, and status pages.
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🎵 STREAM CONFIGURATION
@@ -542,9 +540,6 @@ ICECAST_HOST=localhost
 ICECAST_PORT=8000
 ICECAST_MAX_CLIENTS=1000
 ICECAST_BURST_SIZE=65535
-
-WEB_HOST=0.0.0.0
-WEB_PORT=8080
 
 AUTODJ_PUBLIC=1
 LIVE_PUBLIC=0

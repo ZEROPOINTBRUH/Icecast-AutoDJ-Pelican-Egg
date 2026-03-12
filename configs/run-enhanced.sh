@@ -475,11 +475,14 @@ main() {
     # Generate Liquidsoap config with correct password from environment
     log_info "Generating Liquidsoap configuration..."
     ICECAST_SOURCE_PASSWORD="${SOURCE_PASSWORD:-autodjpassword123}"
+    ICECAST_STREAM_PORT="${SERVER_PORT:-8000}"
+    ICECAST_STREAM_BITRATE="${MP3_BITRATE:-128}"
     
-    # Create simple working config - matching original format that worked
+    # Create simple working config - single port, Pelican Panel compatible
     cat > /home/container/radio.liq << EOF
 #!/usr/bin/liquidsoap
 # AutoDJ-Extreme by @zeropointbruh
+# Single port configuration - all services on port ${ICECAST_STREAM_PORT}
 
 set("log.file.path", "/home/container/log/liquidsoap.log")
 set("log.level", 3)
@@ -487,10 +490,10 @@ set("log.level", 3)
 music = playlist("/home/container/playlist.m3u")
 radio = mksafe(music)
 
-output.icecast(%mp3(bitrate=128), host="localhost", port=8000, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", radio)
+output.icecast(%mp3(bitrate=${ICECAST_STREAM_BITRATE}), host="localhost", port=${ICECAST_STREAM_PORT}, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", radio)
 EOF
     
-    log_success "Liquidsoap config generated"
+    log_success "Liquidsoap config generated (port: ${ICECAST_STREAM_PORT}, bitrate: ${ICECAST_STREAM_BITRATE}kbps)"
     
     # Copy Icecast XSL files to webroot (required for status-json.xsl endpoint)
     log_info "Setting up Icecast status endpoints..."
@@ -542,11 +545,11 @@ EOF
     print_box_text "RADIO STATION IS LIVE!" 80 "$GREEN$BOLD"
     print_box_line 80 "${BOX_VR}${BOX_VL}"
     print_box_text "" 80
-    print_box_text "MP3 128k:  http://${SERVER_IP}:${SERVER_PORT}/autodj.mp3" 80 "$WHITE"
-    print_box_text "Web UI:    http://${SERVER_IP}:${SERVER_PORT}/" 80 "$WHITE"
+    print_box_text "Stream:      http://${SERVER_IP}:${SERVER_PORT}/autodj" 80 "$WHITE"
+    print_box_text "Icecast Web: http://${SERVER_IP}:${SERVER_PORT}/" 80 "$WHITE"
+    print_box_text "Status JSON: http://${SERVER_IP}:${SERVER_PORT}/status-json.xsl" 80 "$WHITE"
     print_box_text "" 80
     print_box_text "Admin Panel: http://${SERVER_IP}:${SERVER_PORT}/admin/" 80 "$CYAN"
-    print_box_text "Requests:    http://${SERVER_IP}:${SERVER_PORT}/request.html" 80 "$CYAN"
     print_box_text "" 80
     print_box_line 80 "${BOX_BL}${BOX_BR}"
     echo -e "${NC}"

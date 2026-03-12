@@ -28,14 +28,12 @@ STREAM_PASSWORD=streampassword123        # Password for /stream mount point
 ```bash
 # Icecast Server
 ICECAST_HOST=localhost                   # Icecast server hostname
-ICECAST_PORT=8000                        # Icecast listening port
+ICECAST_PORT=8000                        # Icecast listening port (SINGLE PORT - serves everything)
 ICECAST_MAX_CLIENTS=1000                 # Max concurrent clients
 ICECAST_BURST_SIZE=65535                 # Burst size for new connections
 
-# Web Interface
-WEB_HOST=0.0.0.0                         # Web server bind address
-WEB_PORT=8080                            # Web server port
-WEB_MOUNT=/                              # Mount point for web interface
+# Note: Only ONE port is used. Icecast serves streams, admin, and status on ICECAST_PORT.
+# This is fully compatible with Pelican Panel single-port allocation.
 ```
 
 ### 🎵 Stream Configuration
@@ -137,10 +135,9 @@ AUTODJ_PASSWORD=YourSecureAutoDJPassword012!
 LIVE_PASSWORD=YourSecureLivePassword345!
 STREAM_PASSWORD=YourSecureStreamPassword678!
 
-# Network
+# Network (SINGLE PORT - Pelican Panel compatible)
 ICECAST_HOST=0.0.0.0
 ICECAST_PORT=8000
-WEB_PORT=8080
 
 # Stream Public Access
 AUTODJ_PUBLIC=1
@@ -164,8 +161,7 @@ services:
   autodj:
     image: zeropointbruh/autodj-extreme:latest
     ports:
-      - "8000:8000"  # Icecast
-      - "8080:8080"  # Web UI
+      - "8000:8000"  # Single port - Icecast serves everything
     volumes:
       - ./music:/home/container/music
       - ./logs:/home/container/log
@@ -178,7 +174,6 @@ services:
 ```bash
 docker run -d \
   -p 8000:8000 \
-  -p 8080:8080 \
   --env-file .env \
   -v ./music:/home/container/music \
   -v ./logs:/home/container/log \
