@@ -266,4 +266,18 @@
         </changeowner>
         -->
     </security>
+
+    <!-- MIME type mappings for proper content-type headers -->
+    <mime-types>
+        <mime-type ext="js" type="application/javascript"/>
+        <mime-type ext="json" type="application/json"/>
+        <mime-type ext="css" type="text/css"/>
+        <mime-type ext="html" type="text/html"/>
+        <mime-type ext="svg" type="image/svg+xml"/>
+        <mime-type ext="xsl" type="application/xml"/>
+        <mime-type ext="mp3" type="audio/mpeg"/>
+        <mime-type ext="ogg" type="audio/ogg"/>
+        <mime-type ext="flac" type="audio/flac"/>
+        <mime-type ext="opus" type="audio/opus"/>
+    </mime-types>
 </icecast>

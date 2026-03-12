@@ -129,44 +129,64 @@ async function updateNowPlaying() {
 }
 
 function updateFromIcecastStats() {
-    fetch('/status-json.xsl')
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.text();
-        })
-        .then(text => {
-            // Handle empty response
-            if (!text || text.trim() === '') throw new Error('Empty response');
-            return JSON.parse(text);
-        })
-        .then(data => {
-            const source = data.icestats?.source;
-            if (source) {
-                // Handle single source or array of sources
-                const src = Array.isArray(source) ? source[0] : source;
-                const trackData = {
-                    title: src.title || src.server_name || 'AutoDJ Stream',
-                    artist: src.artist || 'Now Playing',
-                    genre: src.genre || 'Various'
-                };
-                updateTrackDisplay(trackData);
-                
-                // Update status indicator
-                const statusDot = document.querySelector('.status-dot');
-                if (statusDot) statusDot.style.background = '#1db954';
-            } else {
-                // No source = no stream
-                document.getElementById('trackTitle').textContent = 'Stream Offline';
-                document.getElementById('trackArtist').textContent = 'Waiting for source...';
-                const statusDot = document.querySelector('.status-dot');
-                if (statusDot) statusDot.style.background = '#f83062';
-            }
-        })
-        .catch(err => {
-            console.error('Stats error:', err);
-            document.getElementById('trackTitle').textContent = 'Connection Error';
-            document.getElementById('trackArtist').textContent = 'Unable to reach server';
-        });
+    // Try multiple endpoints to get stream status
+    const endpoints = [
+        '/status-json.xsl',
+        '/admin/stats.json',
+        '/api/stats'
+    ];
+    
+    const tryEndpoint = (index) => {
+        if (index >= endpoints.length) {
+            // All endpoints failed, show offline status
+            console.warn('All Icecast status endpoints unavailable');
+            document.getElementById('trackTitle').textContent = 'Stream Status: Checking...';
+            document.getElementById('trackArtist').textContent = 'Endpoints not available';
+            const statusDot = document.querySelector('.status-dot');
+            if (statusDot) statusDot.style.background = '#f83062';
+            return;
+        }
+        
+        fetch(endpoints[index])
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.text();
+            })
+            .then(text => {
+                if (!text || text.trim() === '') throw new Error('Empty response');
+                return JSON.parse(text);
+            })
+            .then(data => {
+                const source = data.icestats?.source;
+                if (source) {
+                    // Handle single source or array of sources
+                    const src = Array.isArray(source) ? source[0] : source;
+                    const trackData = {
+                        title: src.title || src.server_name || 'AutoDJ Stream',
+                        artist: src.artist || 'Now Playing',
+                        genre: src.genre || 'Various'
+                    };
+                    updateTrackDisplay(trackData);
+                    
+                    // Update status indicator
+                    const statusDot = document.querySelector('.status-dot');
+                    if (statusDot) statusDot.style.background = '#1db954';
+                } else {
+                    // No source = no stream
+                    document.getElementById('trackTitle').textContent = 'Stream Offline';
+                    document.getElementById('trackArtist').textContent = 'Waiting for source...';
+                    const statusDot = document.querySelector('.status-dot');
+                    if (statusDot) statusDot.style.background = '#f83062';
+                }
+            })
+            .catch(err => {
+                console.debug(`Endpoint ${endpoints[index]} failed:`, err);
+                // Try next endpoint
+                tryEndpoint(index + 1);
+            });
+    };
+    
+    tryEndpoint(0);
 }
 
 function updateTrackDisplay(data) {
@@ -182,13 +202,39 @@ function updateTrackDisplay(data) {
 
 async function updateStats() {
     try {
-        const response = await fetch('/status-json.xsl');
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        // Try multiple endpoints
+        const endpoints = [
+            '/status-json.xsl',
+            '/admin/stats.json',
+            '/api/stats'
+        ];
         
-        const text = await response.text();
-        if (!text || text.trim() === '') throw new Error('Empty response');
+        let data = null;
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) {
+                    console.debug(`Stats endpoint ${endpoint} returned ${response.status}`);
+                    continue;
+                }
+                
+                const text = await response.text();
+                if (!text || text.trim() === '') continue;
+                
+                data = JSON.parse(text);
+                console.debug(`Successfully fetched stats from ${endpoint}`);
+                break;
+            } catch (e) {
+                console.debug(`Failed to fetch ${endpoint}:`, e);
+                continue;
+            }
+        }
         
-        const data = JSON.parse(text);
+        if (!data) {
+            console.warn('No stats endpoint available');
+            return;
+        }
+        
         const stats = data.icestats;
         if (!stats) return;
         
@@ -217,7 +263,8 @@ async function updateStats() {
             if (uptimeEl) uptimeEl.textContent = calculateUptime(stats.server_start);
         }
     } catch (error) {
-        console.error('Failed to update stats:', error);
+        console.debug('Failed to update stats:', error);
+        // Don't spam errors - just silently fail if endpoints not available
     }
 }
 
