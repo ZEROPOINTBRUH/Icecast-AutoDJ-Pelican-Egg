@@ -50,17 +50,15 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Create necessary directories and copy Icecast web files
+# Create necessary directories
 RUN mkdir -p /home/container \
     && mkdir -p /home/container/music \
     && mkdir -p /home/container/ads \
     && mkdir -p /home/container/jingles \
     && mkdir -p /home/container/playlists \
     && mkdir -p /home/container/log \
-    && mkdir -p /home/container/web \
     && mkdir -p /etc/ezstream \
-    && cp -r /usr/share/icecast2/web/* /home/container/web/ \
-    && chown -R container:container /home/container/web
+    && chown -R container:container /home/container
 
 # Set working directory
 WORKDIR /home/container

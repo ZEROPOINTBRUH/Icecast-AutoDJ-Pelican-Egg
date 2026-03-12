@@ -1,215 +1,155 @@
 # AutoDJ-EXTREME v2.0
-## Enterprise-Grade Professional Radio Station Platform
+## Professional Icecast Radio Station Platform
 
 ![Status](https://img.shields.io/badge/status-production-success)
 ![Version](https://img.shields.io/badge/version-2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**The most advanced AutoDJ platform for Pelican/Pterodactyl Panel**
+**Clean, minimal Icecast streaming with Liquidsoap automation**
 
-🎵 **13 simultaneous stream formats** • 🎛️ **Professional audio processing** • 🌐 **Modern Spotify-style web UI** • ⏰ **Time-based scheduling** • 📡 **REST API** • 🎙️ **Live DJ support**
+🎵 **Multi-format audio** • 🎛️ **Professional processing** • 📡 **Automatic playlist rotation** • � **Liquidsoap engine**
 
 ---
 
-## ✨ What Makes This EXTREME?
+## ✨ What is AutoDJ-Extreme?
 
-### 🚀 Powered by Liquidsoap (Not ezstream!)
-This is the **ONLY** Pelican/Pterodactyl egg using **Liquidsoap** - the same engine that powers AzuraCast and commercial radio stations.
+A streamlined, production-ready Icecast radio server powered by Liquidsoap. Default Icecast web interface only - no bloat, just pure streaming.
 
-### 🎨 Beautiful Spotify-Grade Web UI
-- Modern dark theme with gradient effects
-- Real-time now playing display
-- Admin controls (skip tracks, refresh playlists)
-- Live statistics dashboard
-- One-click stream URL copying
-- Mobile responsive design
+### 🎵 Audio Formats
+- MP3 (64k, 128k, 192k, 320k)
+- OGG Vorbis
+- OPUS
+- FLAC
+- WAV
+- M4A, AAC, and more
 
-### 🎵 13 Simultaneous Output Streams
-- **MP3**: 64k, 128k, 192k, 320k
-- **OGG Vorbis**: Q5 (~160k), Q8 (~256k)
-- **AAC**: 128k standard, 64k HE-AAC mobile
-- **OPUS**: 96k, 128k HQ
-- **FLAC**: Lossless audiophile quality
-- **HLS**: Apple TV/iOS/Safari streaming
+### 🎛️ Smart Audio Engine
+- **Liquidsoap 2.0.2**: Same engine as AzuraCast, commercial radio
+- **Automatic playlists**: Continuous rotation from your music folder
+- **Clean audio**: No artifacts, professional quality
+- **Efficient**: Low CPU, works on minimal hardware
 
-### 🎛️ Broadcast-Grade Audio Processing
-- Professional 3-band EQ
-- Multiband compression
-- ReplayGain normalization
-- Stereo enhancement
-- Peak limiting
-- Smart crossfading (4 seconds)
-- Loudness normalization (-13 LUFS)
-
-### ⏰ Advanced Features
-- Time-based playlist scheduling
-- Song request system
-- Automatic recording & archiving
-- Station ID insertion (top of hour)
-- Ads/jingles rotation
-- Live DJ input support
-- REST API for automation
+### 📡 Simple Streaming
+- **One stream endpoint**: `/autodj.mp3`
+- **Standard Icecast**: Default web interface
+- **Scalable**: Handles thousands of listeners
+- **Reliable**: Auto-recovery if processes fail
 
 ## 🚀 Quick Start (5 Minutes)
 
-### 1. Import the Egg
+### 1. Clone & Configure
+
 ```bash
-https://github.com/ZEROPOINTBRUH/AutoDJ-Extreme/raw/main/egg/radio-extreme.json
+git clone https://github.com/ZEROPOINTBRUH/AutoDJ-Extreme.git
+cd AutoDJ-Extreme
+cp .env.example .env
+nano .env  # Edit with your settings
 ```
 
-### 2. Create Server
-- **Lazy mode**: Just click through - all defaults are set!
-- **Secure mode**: Change the default passwords (they have "CHANGE THIS!" warnings)
+### 2. Add Music
 
-### 3. Upload Music
-- Upload any audio format (MP3, M4A, FLAC, OGG, etc.) to `/music` folder
-- Optionally add ads to `/ads` and jingles to `/jingles`
+```bash
+mkdir music
+cp /path/to/your/music/*.mp3 music/
+```
 
-### 4. Start & Access
-- **Web UI**: `http://YOUR_IP:PORT/`
-- **Admin Panel**: `http://YOUR_IP:PORT/admin/`
-- **Streams**: Click any format in the web UI
+### 3. Start
 
-### 5. Done! 🎉
-Your professional radio station is live with 13+ stream formats!
+```bash
+# Docker Compose (recommended)
+docker-compose up -d
+
+# Or systemd
+./scripts/generate-configs.sh
+sudo cp configs/icecast.xml /etc/icecast2/
+sudo systemctl restart icecast2
+```
+
+### 4. Stream
+
+```
+http://localhost:8000/autodj.mp3       # Stream
+http://localhost:8000/status.xsl        # Status
+http://localhost:8000/admin/            # Admin
+```
+
+Done! Your radio station is live.
 
 ## Can I Advertise on It?
-Hell yeah, make money on it. I'm not a huge financial nerd.
+Yes. Make money on it if you want.
 
-## Can NASA Hear It?
-Become a popular first nerd and on the double.
+## Is It Reliable?
+Yes. Processes auto-restart if they fail. Production-ready.
 
-## 📚 Complete Features List
+## 📚 Features
 
-### 🎵 Audio Features
+### 🎵 Audio
 - **Multi-format support**: MP3, M4A, AAC, OGG, FLAC, OPUS, WAV, WMA
-- **Mixed format playlists**: Play different formats in same playlist
-- **Professional processing**: EQ, compression, normalization
-- **Smart crossfading**: 4-second intelligent transitions
-- **ReplayGain**: Consistent volume across tracks
-- **Stereo enhancement**: Wider stereo image
-
-### ⏰ Scheduling & Automation
-- **Time-based playlists**: Different playlists for morning/day/evening/night
-- **Station IDs**: Auto-play at top of hour
-- **Ads rotation**: Play ad every X songs (configurable)
-- **Jingles**: Play jingle every X songs (configurable)
-- **Request queue**: Listener song requests
-
-### 🌐 Web Interface
-- **Modern UI**: Spotify-style dark theme
-- **Real-time updates**: Auto-refresh every 5 seconds
-- **Admin controls**: Skip tracks, refresh playlists
-- **Stream manager**: All formats with copy buttons
-- **Statistics**: Listeners, uptime, bitrate
-- **Mobile responsive**: Works on all devices
+- **Automatic playlists**: Continuous rotation from your music folder
+- **Liquidsoap engine**: Professional audio processing
+- **High quality**: 320kbps MP3 or lossless FLAC
 
 ### 📡 Streaming
-- **13 simultaneous formats**: MP3, OGG, AAC, OPUS, FLAC, HLS
-- **Adaptive bitrates**: 64k to 320k MP3
-- **HLS streaming**: Apple devices compatible
-- **ICY metadata**: Song info to players
-- **Multiple mount points**: Choose your format
+- **Single stream endpoint**: `/autodj.mp3`
+- **Standard Icecast**: Default web interface
+- **Metadata**: Track info to players (ICY)
+- **Multiple clients**: Scales to thousands of listeners
 
-### 🎙️ Live Broadcasting
-- **Harbor input**: DJ can connect on port 8001
-- **Seamless switching**: Auto-fallback to AutoDJ
-- **Same processing**: Live audio gets same quality
-- **Metadata support**: Update track info live
+### ⚙️ Configuration
+- **Environment variables**: Easy setup via `.env` file
+- **Docker ready**: One command deployment
+- **Systemd support**: Run as Linux service
+- **Auto-recovery**: Services restart if they fail
 
-### 🔧 Administration
-- **REST API**: Full remote control
-- **Telnet server**: Advanced control (port 1234)
-- **Health monitoring**: `/api/health` endpoint
-- **Statistics API**: `/api/stats` endpoint
-- **Recording**: Automatic hourly archives
-- **Track logging**: Full playback history
-
-### ⚙️ Easy Configuration
-- **autodj.conf**: Simple config file for beginners
-- **Environment variables**: Panel-based configuration
-- **Sensible defaults**: Works out of the box
-- **No technical knowledge required**: Plain English settings
+### � Monitoring
+- **Icecast admin**: Standard admin interface
+- **Status endpoint**: `/status.xsl`
+- **Logs**: Detailed logging for troubleshooting
+- **Health checks**: Built-in monitoring
 
 ## 📦 What's Included
 
-### Pterodactyl/Pelican Eggs
-- `egg/radio.json` - Original (legacy)
-- `egg/radio-improved.json` - Enhanced version
-- `egg/radio-extreme.json` - **🔥 EXTREME EDITION** (recommended)
-
 ### Docker & Scripts
-- `docker/Dockerfile` - Custom image with all dependencies
-- `docker/run-enhanced.sh` - Beautiful output & logging
-- `icecast-autodj-backup/` - Preserved original repo
+- `docker/Dockerfile` - Image with all dependencies
+- `configs/radio.liq` - Liquidsoap configuration
+- `configs/icecast.xml` - Icecast server configuration
+- `configs/run-enhanced.sh` - Enhanced startup script
+- `scripts/generate-configs.sh` - Configuration generator
 
-### Web Interface
-- `webui/` - Modern player UI with visualizer
-
-### Legal
-- `LICENSE` - MIT License
-- `LICENSE-ENHANCED` - Enhanced terms
-- `ATTRIBUTION.md` - Commercial use requirements
+### Configuration
+- `.env.example` - Configuration template
+- `.env.defaults` - Default values
+- `CONFIGURATION.md` - Setup guide
+- `ENVIRONMENT_CONFIG.md` - Variable reference
 
 ## 🗂️ Project Structure
 
 ```
 AutoDJ-Extreme/
-├── egg/
-│   └── radio-extreme.json       # Pelican/Pterodactyl egg
-├── docker/
-│   ├── Dockerfile               # Liquidsoap + all dependencies
-│   └── entrypoint.sh            # Container entrypoint
 ├── configs/
-│   ├── radio.liq                # Liquidsoap configuration (528 lines)
-│   ├── icecast.xml              # Icecast server config
-│   ├── run-enhanced.sh          # Startup script (557 lines)
-│   ├── autodj.conf              # Simple user config
-│   └── install.sh               # Installation script
-├── web/
-│   ├── index.html               # Modern web UI
-│   ├── style.css                # Spotify-style theme
-│   └── app.js                   # Control panel logic
-└── README.md                    # You are here
+│   ├── radio.liq                # Liquidsoap config
+│   ├── icecast.xml              # Icecast config
+│   ├── run-enhanced.sh          # Startup script
+│   └── ...
+├── scripts/
+│   └── generate-configs.sh      # Config generator
+├── docker/
+│   ├── Dockerfile               # Container image
+│   └── docker-compose.yml       # Docker Compose
+├── music/                       # Your music files
+├── logs/                        # Log files
+├── .env.example                 # Configuration template
+└── README.md                    # This file
 ```
 
 ## 📋 System Requirements
 
-- **Panel**: Pelican Panel or Pterodactyl Panel
-- **RAM**: 512MB minimum, 1GB recommended
-- **CPU**: 1 core minimum, 2+ cores for multiple streams
-- **Disk**: 2GB minimum (more for recordings)
-- **Docker**: Required (provided by panel)
-- **Port**: 1 port assigned by panel
-
-## 🔌 Port Configuration
-
-**ONE port does everything:**
-- All 13 stream formats
-- Web control panel
-- Admin interface
-- REST API
-- HLS streaming
-- Statistics
-
-**Optional second port** for live DJ input (requires manual setup)
-
-## 🎨 Web UI Screenshots
-
-**Access**: `http://YOUR_IP:PORT/`
-
-### Features:
-- **Dashboard**: Now playing, stats, quick controls
-- **Streams**: All 13 formats with copy buttons
-- **Queue**: Upcoming tracks
-- **Stats**: Detailed analytics
-- **Settings**: Station configuration
-
-### Admin Controls:
-- ⏭️ Skip current track
-- 🔄 Refresh playlist
-- 📊 View live statistics
-- 📋 Copy stream URLs
+- **OS**: Linux, macOS, or Windows (via Docker)
+- **RAM**: 256MB minimum, 512MB recommended
+- **CPU**: 1 core
+- **Disk**: 1GB minimum (+ music storage)
+- **Docker**: Recommended, or native Linux install
+- **Port**: 1 port (typically 8000)
 
 ## 🔐 Default Credentials
 
@@ -218,9 +158,8 @@ AutoDJ-Extreme/
 - **Admin Username**: `admin`
 - **Admin Password**: `adminpassword123`
 - **Source Password**: `autodjpassword123`
-- **Relay Password**: `relaypassword123`
 
-All can be changed in Pelican Panel during server creation.
+All can be changed in the `.env` file.
 
 ## 📡 Stream URLs
 
