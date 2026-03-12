@@ -479,7 +479,7 @@ main() {
     ICECAST_STREAM_BITRATE="${MP3_BITRATE:-128}"
     
     # Create simple working config - single port, Pelican Panel compatible
-    # Includes on_track callback for track change logging
+    # Includes on_metadata callback for track change logging
     cat > /home/container/radio.liq << EOF
 #!/usr/bin/liquidsoap
 # AutoDJ-Extreme by @zeropointbruh
@@ -499,7 +499,7 @@ def on_track_change(m) =
   system("echo \"\$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{filename}]\" >> /home/container/log/track-history.log")
 end
 
-radio = on_track(on_track_change, mksafe(music))
+radio = on_metadata(on_track_change, mksafe(music))
 
 output.icecast(%mp3(bitrate=${ICECAST_STREAM_BITRATE}), host="localhost", port=${ICECAST_STREAM_PORT}, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", radio)
 EOF

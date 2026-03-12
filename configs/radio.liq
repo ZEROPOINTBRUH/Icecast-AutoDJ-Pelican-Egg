@@ -17,7 +17,7 @@ def on_track_change(m) =
   system("echo \"$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{filename}]\" >> /home/container/log/track-history.log")
 end
 
-radio = on_track(on_track_change, mksafe(music))
+radio = on_metadata(on_track_change, mksafe(music))
 
 # Output to Icecast - single port, mount point /autodj
 # Note: run-enhanced.sh auto-generates this file with correct env var values

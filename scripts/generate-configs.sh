@@ -331,8 +331,17 @@ jingles_dir = "JINGLES_DIR_VAR"
 # Load main playlist
 music = playlist("MUSIC_DIR_VAR/playlist.m3u")
 
-# Initialize with safety wrapper
-radio = mksafe(music)
+# Log track changes to console and file
+def on_track_change(m) =
+  title = m["title"]
+  artist = m["artist"]
+  filename = m["filename"]
+  log("NOW PLAYING: #{artist} - #{title} [#{filename}]")
+  system("echo \"$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{filename}]\" >> LOG_DIR_VAR/track-history.log")
+end
+
+# Initialize with safety wrapper and track logging
+radio = on_metadata(on_track_change, mksafe(music))
 
 # Output to Icecast with environment-configured credentials
 output.icecast(
