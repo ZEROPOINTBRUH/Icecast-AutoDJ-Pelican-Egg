@@ -490,9 +490,9 @@ def on_track_change(m) =
   system("echo \"\$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{filename}]\" >> /home/container/log/track-history.log")
 end
 
-# Apply metadata callback and safety wrapper
+# Apply safety wrapper and register track change callback
 radio = mksafe(music)
-radio = metadata.on_change(on_track_change, radio)
+radio.on_track(on_track_change)
 
 output.icecast(%mp3(bitrate=${ICECAST_STREAM_BITRATE}), host="localhost", port=${ICECAST_STREAM_PORT}, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", radio)
 EOF

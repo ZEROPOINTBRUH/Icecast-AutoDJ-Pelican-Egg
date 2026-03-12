@@ -338,9 +338,9 @@ def on_track_change(m) =
   system("echo \"$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{filename}]\" >> LOG_DIR_VAR/track-history.log")
 end
 
-# Initialize with safety wrapper and track logging
+# Apply safety wrapper and register track change callback
 radio = mksafe(music)
-radio = metadata.on_change(on_track_change, radio)
+radio.on_track(on_track_change)
 
 # Output to Icecast with environment-configured credentials
 output.icecast(
