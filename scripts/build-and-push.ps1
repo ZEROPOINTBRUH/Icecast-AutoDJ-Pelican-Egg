@@ -60,7 +60,37 @@ Write-Output ""
 # Push image
 if ($Push) {
     Write-Output "[3/4] Pushing image to GHCR..."
-    Write-Output "  Ensure you are logged in: docker login ghcr.io"
+    
+    # Check if docker is logged in to GHCR
+    $loginTest = docker run --rm -v /var/run/docker.sock:/var/run/docker.sock alpine:latest echo "test" 2>&1
+    
+    Write-Output "  Checking GHCR authentication..."
+    
+    # Try to authenticate using GitHub CLI if available
+    $ghCliAvailable = Get-Command gh -ErrorAction SilentlyContinue
+    if ($ghCliAvailable) {
+        Write-Output "  ✓ GitHub CLI found - attempting to authenticate..."
+        try {
+            $token = & gh auth token
+            if ($token) {
+                Write-Output "  ✓ Using GitHub CLI token for authentication"
+                $token | docker login ghcr.io -u ZEROPOINTBRUH --password-stdin | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Output "  ✓ Successfully authenticated to GHCR"
+                }
+            }
+        } catch {
+            Write-Output "  ⚠ GitHub CLI token not available"
+        }
+    } else {
+        Write-Output "  ℹ GitHub CLI not found. For browser-based auth:"
+        Write-Output "    1. Install: winget install GitHub.cli"
+        Write-Output "    2. Run: gh auth login"
+        Write-Output "    3. Or create a PAT: https://github.com/settings/tokens"
+    }
+    
+    Write-Output ""
+    Write-Output "  Pushing $($ImageName):$Tag to GHCR..."
     docker push "$($ImageName):$Tag"
     if ($LASTEXITCODE -ne 0) { Write-Error "Push failed"; exit 1 }
     Write-Output "✓ Image pushed successfully"
