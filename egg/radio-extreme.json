@@ -257,6 +257,46 @@
             "user_editable": true,
             "rules": "required|email|max:128",
             "field_type": "text"
+        },
+        {
+            "name": "Public UI Port",
+            "description": "Port for admin/public UI (usually ICECAST_PORT + 1)",
+            "env_variable": "PUBLIC_PORT",
+            "default_value": "8001",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:1024|max:65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Admin Key",
+            "description": "Secret key for admin UI access (use strong value)",
+            "env_variable": "ADMIN_KEY",
+            "default_value": "changeme",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:8|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Last.fm API Key",
+            "description": "Last.fm API key (optional, for scrobbling support)",
+            "env_variable": "LASTFM_API_KEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Last.fm API Secret",
+            "description": "Last.fm API secret (optional, keep private)",
+            "env_variable": "LASTFM_API_SECRET",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "nullable|string|max:256",
+            "field_type": "text"
         }
     ]
 }

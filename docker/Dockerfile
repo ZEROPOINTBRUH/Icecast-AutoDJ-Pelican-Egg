@@ -48,8 +48,13 @@ RUN apt-get update && apt-get install -y \
     procps \
     findutils \
     ca-certificates \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Bun runtime for public service
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
 
 # Add cleanup script - removes all old files except music/playlists on reinstall
 COPY --chown=container:container docker/cleanup-container.sh /usr/local/bin/cleanup-container.sh
@@ -68,8 +73,8 @@ RUN mkdir -p /home/container \
 # Set working directory
 WORKDIR /home/container
 
-# Expose Icecast port
-EXPOSE 8000
+# Expose Icecast port and public/admin UI port
+EXPOSE 8000 8001
 
 # Healthcheck for Pelican / container runtime
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
@@ -78,7 +83,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 # Copy entrypoint script
 COPY --chown=container:container ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-
+# Copy Bun public service script
+COPY --chown=container:container ./scripts/public.ts /home/container/public.ts
+COPY --chown=container:container ./public /home/container/public
+COPY --chown=container:container ./package.json /home/container/package.json
 # Set entrypoint (Pelican Panel compatible)
 ENTRYPOINT ["/entrypoint.sh"]
 
