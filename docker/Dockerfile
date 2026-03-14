@@ -10,7 +10,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Create container user (required by Pelican Panel)
 RUN useradd -m -d /home/container -s /bin/bash container
 
-# Install all dependencies including audio codecs and processing tools
+# Symlink /home/container to /nonexistent (yolks convention)
+RUN ln -s /home/container/ /nonexistent
+
+ENV USER=container HOME=/home/container
+
+# Install all dependencies including audio codecs, processing tools, and tini
 RUN apt-get update && apt-get install -y \
     icecast2 \
     liquidsoap \
@@ -48,17 +53,14 @@ RUN apt-get update && apt-get install -y \
     coreutils \
     procps \
     findutils \
+    iproute2 \
     ca-certificates \
+    tini \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Bun runtime for public service
-RUN curl -fsSL https://bun.sh/install | bash && \
-    cp /root/.bun/bin/bun /usr/local/bin/bun && \
-    chmod +x /usr/local/bin/bun
-
 # Add cleanup script - removes all old files except music/playlists on reinstall
-COPY --chown=container:container docker/cleanup-container.sh /usr/local/bin/cleanup-container.sh
+COPY docker/cleanup-container.sh /usr/local/bin/cleanup-container.sh
 RUN chmod +x /usr/local/bin/cleanup-container.sh
 
 # Create necessary directories
@@ -74,22 +76,12 @@ RUN mkdir -p /home/container \
 # Set working directory
 WORKDIR /home/container
 
-# Expose Icecast port and public/admin UI port
-EXPOSE 8000 8001
+STOPSIGNAL SIGINT
 
-# Healthcheck for Pelican / container runtime
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost:8000/status-json.xsl || exit 1
+# Copy entrypoint script (must be readable/executable by all users)
+COPY --chown=container:container docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Copy entrypoint script (must be readable/executable by all users for Pelican compatibility)
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod 755 /entrypoint.sh
-# Copy Bun public service script
-COPY --chown=container:container ./scripts/public.ts /home/container/public.ts
-COPY --chown=container:container ./public /home/container/public
-COPY --chown=container:container ./package.json /home/container/package.json
-# Set entrypoint (Pelican Panel compatible)
-ENTRYPOINT ["/entrypoint.sh"]
-
-# Run as container user for Pelican compatibility
-USER container
+# Use tini as init process (matches yolks pattern for Pelican Panel)
+ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
+CMD ["/entrypoint.sh"]
