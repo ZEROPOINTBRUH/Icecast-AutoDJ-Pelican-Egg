@@ -7,7 +7,7 @@
     "exported_at": "2026-02-05T00:00:00+00:00",
     "name": "Icecast-AutoDJ-Extreme (dev)",
     "author": "system@localhost",
-    "description": "(dev) Enhanced Icecast radio streaming server with AutoDJ, multi-playlist support, ads rotation, jingle injection, and advanced features. Compatible with both Pterodactyl and Pelican Panel.",
+    "description": "⚠️ DEV BRANCH — Enhanced Icecast radio streaming server with AutoDJ, multi-playlist support, ads rotation, jingle injection, Bun admin UI, and advanced features. Compatible with both Pterodactyl and Pelican Panel. Use at your own risk.",
     "features": null,
     "docker_images": {
         "ghcr.io/zeropointbruh/icecast-autodj": "ghcr.io/zeropointbruh/icecast-autodj:latest"
@@ -40,7 +40,7 @@
         },
         {
             "name": "Repository Branch",
-            "description": "Git branch to clone (use 'dev' for development builds)",
+            "description": "Git branch to clone (default: dev - development branch with latest features)",
             "env_variable": "REPO_BRANCH",
             "default_value": "dev",
             "user_viewable": true,
@@ -260,7 +260,7 @@
         },
         {
             "name": "Public UI Port",
-            "description": "Port for admin/public UI. Leave blank to auto-calculate as primary_port + 1. Set custom value to override.",
+            "description": "Port for Bun admin/public UI. Leave blank to auto-calculate as primary_port + 1. Set custom value to override (exact port, not +1).",
             "env_variable": "PUBLIC_PORT",
             "default_value": "",
             "user_viewable": true,

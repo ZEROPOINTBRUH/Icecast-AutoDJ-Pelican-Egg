@@ -1,21 +1,43 @@
-# AutoDJ-Extreme — Dev build
+# AutoDJ-Extreme — Dev Branch
+
+⚠️ **WARNING: This is the development branch** — Use at your own risk. Features may be unstable or untested. For production use, prefer stable release branches.
 
 This repository contains the AutoDJ-Extreme project with a Dev management UI and Bun-based public/admin service.
+
+## Architecture
+
+- **Icecast** (port 8000): Main radio streaming server
+- **Bun Admin UI** (port 8001 by default): Management interface for tracks, playlists, ads, and Last.fm integration
+  - Public port automatically = primary port + 1 (e.g., 8000 → 8001)
+  - Can be manually customized in Pelican Panel settings if needed
 
 ## Quick start (Pelican Panel)
 
 1. Ensure you have Git and Docker installed.
 
-2. Install the egg in Pelican Panel:
+2. Import the egg in Pelican Panel:
    - Go to Admin > Nests > Create Egg
    - Paste the contents of `egg/radio-extreme.json`
-   - Set `REPO_BRANCH=dev` to use the dev branch
-   - Deploy a container from this egg
+   - Use default values (server will auto-detect ports and branch)
 
-3. The container will:
-   - Clone the `dev` branch of this repository
-   - Copy configs to `/home/container`
-   - Start Icecast on the configured port
+3. Deployment:
+   - Create a new server using this egg
+   - The container will:
+     - Clone the `dev` branch of this repository  
+     - Auto-calculate PUBLIC_PORT as primary_port + 1 (leave blank for auto)
+     - Start Icecast and Bun admin service
+
+## Public Port Configuration
+
+**Default behavior** (recommended):
+- Leave `PUBLIC_PORT` blank in Pelican Panel settings
+- Server automatically uses: **primary_port + 1**
+- Example: If Icecast is on 8000, Bun admin runs on 8001
+
+**Custom port:**
+- Set `PUBLIC_PORT` to a specific number (e.g., 9000) in Pelican Panel
+- Server uses exactly that port (not +1)
+- Example: If you set PUBLIC_PORT=9000, admin runs on 9000 regardless of primary port
 
 ## Build and test locally (Windows PowerShell)
 
