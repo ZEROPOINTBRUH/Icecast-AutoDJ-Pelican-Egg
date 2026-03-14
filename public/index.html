@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AutoDJ-Extreme — Manager</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <h2>AutoDJ-Extreme</h2>
+        <nav>
+          <button id="nav-tracks" class="active">Tracks</button>
+          <button id="nav-playlists">Playlists</button>
+          <button id="nav-ads">Ads</button>
+        </nav>
+        <div class="meta">Port: <span id="port-info"></span></div>
+        <div style="margin-top:14px">
+          <button id="btn-login" style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff">Admin Login</button>
+        </div>
+      </aside>
+      <main class="main">
+        <section id="view-tracks" class="view">
+          <div class="controls">
+            <form id="upload-form">
+              <input type="file" name="file" id="file-input" accept="audio/*" />
+              <input type="text" id="filename" placeholder="Optional filename" />
+              <button type="submit">Upload Track</button>
+            </form>
+          </div>
+          <div id="tracks-list" class="list"></div>
+        </section>
+
+        <section id="view-playlists" class="view hidden">Playlists UI (coming)</section>
+        <section id="view-ads" class="view hidden">Ads UI (coming)</section>
+      </main>
+      <div id="visual" class="visual-canvas"></div>
+    </div>
+
+    <script src="https://unpkg.com/three@0.154.0/build/three.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

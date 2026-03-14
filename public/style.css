@@ -1,0 +1,24 @@
+:root{
+  --bg:#0f172a; --accent:#1db954; --muted:#94a3b8; --card:#0b1220; --glass:rgba(255,255,255,0.04);
+}
+*{box-sizing:border-box}
+html,body,#app{height:100%;margin:0}
+body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial;color:#e6eef8;background:linear-gradient(180deg,#071025 0%, #071827 60%);}
+.sidebar{width:220px;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);backdrop-filter:blur(6px);position:fixed;left:0;top:0;bottom:0;border-right:1px solid rgba(255,255,255,0.03)}
+.sidebar h2{color:var(--accent);margin:0 0 12px;font-size:20px}
+.sidebar nav{display:flex;flex-direction:column}
+.sidebar button{background:none;border:0;color:var(--muted);padding:8px 0;text-align:left;cursor:pointer}
+.sidebar button.active{color:#fff;font-weight:600}
+.meta{margin-top:18px;color:var(--muted);font-size:13px}
+.main{margin-left:240px;padding:28px 32px 80px;display:flex;flex-direction:column;gap:18px}
+.controls{display:flex;gap:12px;align-items:center}
+.controls input[type=file]{background:var(--card);color:#fff;padding:8px;border-radius:6px}
+.controls input[type=text]{padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#fff}
+.controls button{background:var(--accent);border:0;padding:8px 12px;border-radius:8px;color:#071827;cursor:pointer}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:var(--glass);border:1px solid rgba(255,255,255,0.02)}
+.item .meta{color:var(--muted);font-size:13px}
+.visual-canvas{position:fixed;right:20px;bottom:20px;width:420px;height:260px;border-radius:12px;overflow:hidden;box-shadow:0 6px 30px rgba(2,6,23,0.6);background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03)}
+.hidden{display:none}
+
+@media(max-width:900px){.sidebar{position:relative;width:100%;height:auto;border-right:0}.main{margin-left:0;padding:16px}}

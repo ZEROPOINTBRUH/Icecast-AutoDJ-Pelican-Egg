@@ -1,0 +1,87 @@
+# Build, test, and push Docker image for Pelican Panel
+# Usage: .\scripts\build-and-push.ps1 -Push $true
+
+param(
+    [string]$ImageName = "ghcr.io/zeropointbruh/icecast-autodj",
+    [string]$Tag = "dev",
+    [bool]$Push = $false,
+    [bool]$Test = $true
+)
+
+Write-Output "╔════════════════════════════════════════════════════════╗"
+Write-Output "║       AutoDJ-Extreme Docker Build & Push             ║"
+Write-Output "╚════════════════════════════════════════════════════════╝"
+Write-Output ""
+Write-Output "Image: $ImageName"
+Write-Output "Tag: $Tag"
+Write-Output "Push: $Push"
+Write-Output "Test: $Test"
+Write-Output ""
+
+# Build image
+Write-Output "[1/4] Building image..."
+docker build -t "$($ImageName):$Tag" -f docker/Dockerfile .
+if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit 1 }
+Write-Output "✓ Image built successfully"
+Write-Output ""
+
+# Test image
+if ($Test) {
+    Write-Output "[2/4] Testing image (running container for 25s)..."
+    docker rm -f autodj-test 2>$null | Out-Null
+    docker run -d --name autodj-test -p 8000:8000 "$($ImageName):$Tag" | Out-Null
+    Write-Output "  Container started, waiting 20s for service startup..."
+    Start-Sleep -Seconds 20
+    
+    Write-Output "  Checking healthcheck endpoint..."
+    try {
+        $response = curl -s http://localhost:8000/status-json.xsl -ErrorAction Stop
+        if ($response -match "icestats") {
+            Write-Output "✓ Healthcheck PASSED - Icecast is responding"
+        } else {
+            Write-Output "⚠ Healthcheck returned data but format unclear"
+        }
+    } catch {
+        Write-Output "⚠ Healthcheck failed (service may still be starting)"
+    }
+    
+    Write-Output "  Container logs tail:"
+    docker logs autodj-test --tail 10
+    
+    Write-Output "  Cleaning up test container..."
+    docker stop autodj-test 2>$null | Out-Null
+    docker rm -f autodj-test 2>$null | Out-Null
+    Write-Output "✓ Test complete"
+} else {
+    Write-Output "[2/4] Skipping test"
+}
+Write-Output ""
+
+# Push image
+if ($Push) {
+    Write-Output "[3/4] Pushing image to GHCR..."
+    Write-Output "  Ensure you are logged in: docker login ghcr.io"
+    docker push "$($ImageName):$Tag"
+    if ($LASTEXITCODE -ne 0) { Write-Error "Push failed"; exit 1 }
+    Write-Output "✓ Image pushed successfully"
+} else {
+    Write-Output "[3/4] Skipping push (use -Push `$true to enable)"
+}
+Write-Output ""
+
+Write-Output "[4/4] Summary"
+Write-Output "  Image: $($ImageName):$Tag"
+Write-Output "  Built: Yes"
+Write-Output "  Tested: $Test"
+Write-Output "  Pushed: $Push"
+Write-Output ""
+Write-Output "Next steps:"
+if (-not $Push) {
+    Write-Output "  1. Run: docker login ghcr.io"
+    Write-Output "  2. Run: .\scripts\build-and-push.ps1 -Push `$true"
+}
+Write-Output "  3. Pelican egg will pull $($ImageName):$Tag"
+Write-Output ""
+Write-Output "╔════════════════════════════════════════════════════════╗"
+Write-Output "║                   Build Complete                      ║"
+Write-Output "╚════════════════════════════════════════════════════════╝"

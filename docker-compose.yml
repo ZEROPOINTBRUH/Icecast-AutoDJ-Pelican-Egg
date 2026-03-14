@@ -10,7 +10,7 @@ services:
     
     # Port mappings
     ports:
-      - "8000:8000"  # Icecast streaming port
+      - "${AUTODJ_PORT:-8000}:${AUTODJ_PORT:-8000}"  # Icecast streaming port (set via .env)
     
     # Environment variables
     environment:
@@ -29,7 +29,8 @@ services:
       
       # Icecast Configuration
       ICECAST_HOST: "localhost"
-      ICECAST_PORT: "8000"
+      ICECAST_PORT: "${AUTODJ_PORT:-8000}"
+      AUTODJ_PORT: "${AUTODJ_PORT:-8000}"
       ICECAST_MAX_CLIENTS: "1000"
       ICECAST_BURST_SIZE: "65536"
       
@@ -109,6 +110,38 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  public:
+    build:
+      context: .
+      dockerfile: docker/bun.Dockerfile
+    container_name: autodj-public
+    # Expose a user-facing public page (Bun TypeScript server)
+    ports:
+      - "${PUBLIC_PORT:-8001}:${PUBLIC_PORT:-8001}"
+    depends_on:
+      - autodj
+    environment:
+      PUBLIC_PORT: "${PUBLIC_PORT:-8001}"
+      AUTODJ_HOST: "autodj"
+      AUTODJ_PORT: "${AUTODJ_PORT:-8000}"
+      LASTFM_API_KEY: "${LASTFM_API_KEY:-}"
+      LASTFM_API_SECRET: "${LASTFM_API_SECRET:-}"
+      ADMIN_KEY: "${ADMIN_KEY:-changeme}"
+    volumes:
+      - ./public:/app/public
+      - ./configs:/app/configs:ro
+      - ./music:/app/storage/music
+      - ./playlists:/app/storage/playlists
+      - ./ads:/app/storage/ads
+    restart: unless-stopped
+    networks:
+      - autodj-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
 # Named network for the service
 networks:
