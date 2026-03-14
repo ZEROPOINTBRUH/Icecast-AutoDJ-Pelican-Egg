@@ -42,13 +42,13 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     wget \
+    unzip \
     nano \
     bash \
     coreutils \
     procps \
     findutils \
     ca-certificates \
-    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -81,7 +81,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS http://localhost:8000/status-json.xsl || exit 1
 
 # Copy entrypoint script
-COPY --chown=container:container ./entrypoint.sh /entrypoint.sh
+COPY --chown=container:container docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 # Copy Bun public service script
 COPY --chown=container:container ./scripts/public.ts /home/container/public.ts
