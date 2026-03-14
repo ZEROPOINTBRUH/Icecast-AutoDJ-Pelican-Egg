@@ -80,9 +80,9 @@ EXPOSE 8000 8001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS http://localhost:8000/status-json.xsl || exit 1
 
-# Copy entrypoint script
-COPY --chown=container:container docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Copy entrypoint script (must be readable/executable by all users for Pelican compatibility)
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod 755 /entrypoint.sh
 # Copy Bun public service script
 COPY --chown=container:container ./scripts/public.ts /home/container/public.ts
 COPY --chown=container:container ./public /home/container/public
