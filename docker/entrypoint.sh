@@ -40,15 +40,19 @@ fi
 export PUBLIC_PORT
 
 # Start Bun public service in background (if not already running)
-if command -v bun &> /dev/null; then
-    echo "Starting Bun public service on port ${PUBLIC_PORT}..."
-    cd /home/container
-    AUTODJ_HOST="localhost" AUTODJ_PORT="${PRIMARY_PORT}" PUBLIC_PORT="${PUBLIC_PORT}" bun /home/container/public.ts &
-    BUN_PID=$!
-    echo "  Bun service started (PID: $BUN_PID)"
-else
-    echo "⚠ Bun not available - public service will not run"
-fi
+# NOTE: Bun is skipped by default for Pelican Panel compatibility
+# (Some server hardware reports "Illegal instruction" CPU errors with Bun)
+# To enable, uncomment the lines below and rebuild the container
+# if command -v bun &> /dev/null; then
+#     echo "Starting Bun public service on port ${PUBLIC_PORT}..."
+#     cd /home/container
+#     AUTODJ_HOST="localhost" AUTODJ_PORT="${PRIMARY_PORT}" PUBLIC_PORT="${PUBLIC_PORT}" bun /home/container/public.ts &
+#     BUN_PID=$!
+#     echo "  Bun service started (PID: $BUN_PID)"
+# else
+#     echo "⚠ Bun not available - public service will not run"
+# fi
+echo "ℹ Bun admin UI is disabled for this deployment (CPU compatibility)"
 
 # Replace Startup Variables
 MODIFIED_STARTUP=$(echo -e "${STARTUP}" | sed -e 's/{{/${/g' -e 's/}}/}/g')
