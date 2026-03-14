@@ -10,7 +10,7 @@
     "description": "(dev) Enhanced Icecast radio streaming server with AutoDJ, multi-playlist support, ads rotation, jingle injection, and advanced features. Compatible with both Pterodactyl and Pelican Panel.",
     "features": null,
     "docker_images": {
-        "ghcr.io/zeropointbruh/icecast-autodj": "ghcr.io/zeropointbruh/icecast-autodj:dev"
+        "ghcr.io/zeropointbruh/icecast-autodj": "ghcr.io/zeropointbruh/icecast-autodj:latest"
     },
     "file_denylist": [],
     "startup": "bash /home/container/run.sh",
