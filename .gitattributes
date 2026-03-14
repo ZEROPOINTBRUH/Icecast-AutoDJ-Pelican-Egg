@@ -1,0 +1,18 @@
+# Normalise line endings to LF for shell scripts and docker files
+*.sh eol=lf
+Dockerfile eol=lf
+docker/* eol=lf
+scripts/* eol=lf
+configs/* eol=lf
+
+# Text files
+*.md eol=lf
+*.json eol=lf
+*.jsonc eol=lf
+*.yml eol=lf
+*.yaml eol=lf
+*.xml eol=lf
+*.ts eol=lf
+*.js eol=lf
+*.css eol=lf
+*.html eol=lf
