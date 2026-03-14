@@ -53,8 +53,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Bun runtime for public service
-RUN curl -fsSL https://bun.sh/install | bash
-ENV PATH="/root/.bun/bin:$PATH"
+RUN curl -fsSL https://bun.sh/install | bash && \
+    cp /root/.bun/bin/bun /usr/local/bin/bun && \
+    chmod +x /usr/local/bin/bun
 
 # Add cleanup script - removes all old files except music/playlists on reinstall
 COPY --chown=container:container docker/cleanup-container.sh /usr/local/bin/cleanup-container.sh
