@@ -260,12 +260,12 @@
         },
         {
             "name": "Public UI Port",
-            "description": "Port for admin/public UI (usually ICECAST_PORT + 1)",
+            "description": "Port for admin/public UI. Leave blank to auto-calculate as primary_port + 1. Set custom value to override.",
             "env_variable": "PUBLIC_PORT",
-            "default_value": "8001",
+            "default_value": "",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|min:1024|max:65535",
+            "rules": "nullable|integer|min:1024|max:65535",
             "field_type": "text"
         },
         {
