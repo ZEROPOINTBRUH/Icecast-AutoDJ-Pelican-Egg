@@ -32,5 +32,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ lower(github.repository_owner) }}/icecast-autodj:dev
-            ghcr.io/${{ lower(github.repository_owner) }}/icecast-autodj:latest
+            ghcr.io/zeropointbruh/icecast-autodj:dev
+            ghcr.io/zeropointbruh/icecast-autodj:latest
