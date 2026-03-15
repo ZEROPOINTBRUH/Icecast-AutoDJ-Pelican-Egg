@@ -96,9 +96,13 @@
   const volSlider = document.getElementById('volume');
   let isPlaying = false;
 
-  // Stream through the Bun proxy — browser only needs to reach this server's port
+  // Determine the Icecast stream URL from current host (Icecast on same host, port from config)
   function getStreamUrl() {
-    return '/stream';
+    // The Bun admin UI runs on SERVER_PORT+1, Icecast is on SERVER_PORT
+    // We derive Icecast port by subtracting 1 from the current page's port
+    const currentPort = parseInt(location.port, 10);
+    const icecastPort = currentPort ? currentPort - 1 : 8000;
+    return `${location.protocol}//${location.hostname}:${icecastPort}/autodj`;
   }
 
   if (playBtn) {

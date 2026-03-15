@@ -536,7 +536,11 @@ EOF
     log_success "Liquidsoap started (PID: $LIQUIDSOAP_PID)"
     
     # Get server IP and port
-    SERVER_IP=$(hostname -I | awk '{print $1}')
+    # Pelican/Pterodactyl Wings sets SERVER_IP as the allocation IP.
+    # Fall back to INTERNAL_IP (set by entrypoint.sh from ip route), then hostname.
+    if [ -z "$SERVER_IP" ]; then
+        SERVER_IP="${INTERNAL_IP:-$(hostname -I | awk '{print $1}')}"
+    fi
     [ -z "$SERVER_IP" ] && SERVER_IP="localhost"
     SERVER_PORT="${SERVER_PORT:-8000}"
     

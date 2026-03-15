@@ -38,46 +38,12 @@ function defaultCorsHeaders() {
   };
 }
 
-function xmlToJson(xmlText: string) {
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlText, 'application/xml');
-
-    function nodeToObj(node: any): any {
-      const obj: any = {};
-      if (node.nodeType === 3) return node.nodeValue;
-      if (node.attributes && node.attributes.length) {
-        for (let i = 0; i < node.attributes.length; i++) {
-          const attr = node.attributes[i];
-          obj[`@${attr.name}`] = attr.value;
-        }
-      }
-      for (let i = 0; i < node.childNodes.length; i++) {
-        const child = node.childNodes[i];
-        const name = child.nodeName;
-        const val = child.nodeType === 3 ? child.nodeValue.trim() : nodeToObj(child);
-        if (val === '') continue;
-        if (obj[name]) {
-          if (!Array.isArray(obj[name])) obj[name] = [obj[name]];
-          obj[name].push(val);
-        } else {
-          obj[name] = val;
-        }
-      }
-      return obj;
-    }
-
-    return nodeToObj(doc.documentElement || doc);
-  } catch (e) {
-    return { error: String(e) };
-  }
-}
-
 async function fetchAutodjStatusJson() {
   try {
     const res = await fetch(AUTODJ_STATUS_URL);
     const text = await res.text();
-    const parsed = xmlToJson(text);
+    // Icecast 2.4+ /status-json.xsl returns JSON directly
+    const parsed = JSON.parse(text);
     return jsonResponse(parsed);
   } catch (err) {
     return jsonResponse({ error: String(err) }, 502);
@@ -152,9 +118,34 @@ Bun.serve({
       try {
         const res = await fetch(AUTODJ_STATUS_URL);
         const text = await res.text();
-        return new Response(text, { headers: { 'Content-Type': 'application/xml', ...defaultCorsHeaders() } });
+        return new Response(text, { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
       } catch (e) {
         return jsonResponse({ error: String(e) }, 502);
+      }
+    }
+
+    // Stream proxy — lets the browser stream audio through this server (single origin)
+    if (url.pathname === '/stream') {
+      const streamUrl = `http://${AUTODJ_HOST}:${AUTODJ_PORT}/autodj`;
+      try {
+        const upstream = await fetch(streamUrl, {
+          headers: { 'User-Agent': 'AutoDJ-Proxy/1.0', 'Icy-MetaData': '1' },
+        });
+        const headers: Record<string, string> = {
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache',
+          'X-Content-Type-Options': 'nosniff',
+        };
+        const ct = upstream.headers.get('content-type');
+        if (ct) headers['Content-Type'] = ct;
+        const iceHeaders = ['icy-name','icy-description','icy-genre','icy-br','icy-metaint'];
+        for (const h of iceHeaders) {
+          const v = upstream.headers.get(h);
+          if (v) headers[h] = v;
+        }
+        return new Response(upstream.body, { status: upstream.status, headers });
+      } catch (e) {
+        return new Response('Stream unavailable', { status: 502 });
       }
     }
 
