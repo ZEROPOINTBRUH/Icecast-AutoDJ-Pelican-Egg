@@ -1,44 +1,132 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AutoDJ-Extreme — Manager</title>
-    <link rel="stylesheet" href="/style.css">
-  </head>
-  <body>
-    <div id="app">
-      <aside class="sidebar">
-        <h2>AutoDJ-Extreme</h2>
-        <nav>
-          <button id="nav-tracks" class="active">Tracks</button>
-          <button id="nav-playlists">Playlists</button>
-          <button id="nav-ads">Ads</button>
-        </nav>
-        <div class="meta">Port: <span id="port-info"></span></div>
-        <div style="margin-top:14px">
-          <button id="btn-login" style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff">Admin Login</button>
-        </div>
-      </aside>
-      <main class="main">
-        <section id="view-tracks" class="view">
-          <div class="controls">
-            <form id="upload-form">
-              <input type="file" name="file" id="file-input" accept="audio/*" />
-              <input type="text" id="filename" placeholder="Optional filename" />
-              <button type="submit">Upload Track</button>
-            </form>
-          </div>
-          <div id="tracks-list" class="list"></div>
-        </section>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>AutoDJ-Extreme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body class="page-public">
+  <!-- Full-screen animated background canvas -->
+  <canvas id="bg-canvas"></canvas>
 
-        <section id="view-playlists" class="view hidden">Playlists UI (coming)</section>
-        <section id="view-ads" class="view hidden">Ads UI (coming)</section>
-      </main>
-      <div id="visual" class="visual-canvas"></div>
+  <!-- Floating particles overlay -->
+  <div id="particles"></div>
+
+  <!-- Scan lines overlay -->
+  <div class="scanlines"></div>
+
+  <!-- ═══════════════════ NAVBAR ═══════════════════ -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <div class="logo-mark">
+        <span class="logo-icon">&#9881;</span>
+        <span class="logo-text">AUTO<span class="accent">DJ</span></span>
+      </div>
+      <span class="logo-edition">EXTREME</span>
+    </div>
+    <div class="topbar-center">
+      <a href="/" class="nav-link active">LISTEN</a>
+      <a href="/admin" class="nav-link">COMMAND CENTER</a>
+    </div>
+    <div class="topbar-right">
+      <div class="listener-badge" id="listener-count">
+        <span class="pulse-dot"></span>
+        <span id="listeners-num">—</span> LIVE
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ HERO ═══════════════════ -->
+  <main class="hero-container">
+    <div class="hero-content">
+      <!-- Now Playing Card -->
+      <div class="now-playing-card">
+        <div class="np-glow"></div>
+        <div class="np-header">
+          <div class="np-status">
+            <span class="eq-bars"><span></span><span></span><span></span><span></span><span></span></span>
+            NOW PLAYING
+          </div>
+        </div>
+        <div class="np-body">
+          <div class="np-art" id="album-art">
+            <div class="np-art-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+            </div>
+          </div>
+          <div class="np-info">
+            <h1 class="np-title" id="track-title">Waiting for stream...</h1>
+            <p class="np-artist" id="track-artist">—</p>
+            <div class="np-meta">
+              <span class="np-tag" id="np-bitrate">128kbps</span>
+              <span class="np-tag" id="np-format">MP3</span>
+              <span class="np-tag" id="np-mount">/autodj</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio Player -->
+        <div class="player-controls">
+          <button class="play-btn" id="btn-play" aria-label="Play">
+            <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <div class="volume-wrap">
+            <svg class="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            <input type="range" id="volume" min="0" max="100" value="75" class="vol-slider"/>
+          </div>
+          <audio id="audio-player" preload="none"></audio>
+        </div>
+      </div>
+
+      <!-- Station Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-listeners">0</div>
+          <div class="stat-label">LISTENERS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-peak">0</div>
+          <div class="stat-label">PEAK</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-uptime">00:00</div>
+          <div class="stat-label">UPTIME</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-tracks">0</div>
+          <div class="stat-label">TRACKS</div>
+        </div>
+      </div>
+
+      <!-- Recent Tracks -->
+      <div class="recent-panel">
+        <div class="panel-header">
+          <h3>RECENT DROPS</h3>
+          <span class="panel-badge">HISTORY</span>
+        </div>
+        <div id="recent-list" class="recent-list">
+          <div class="recent-empty">No track history yet</div>
+        </div>
+      </div>
     </div>
 
-    <script src="https://unpkg.com/three@0.154.0/build/three.min.js"></script>
-    <script src="/app.js"></script>
-  </body>
+    <!-- Audio visualizer -->
+    <div class="visualizer-wrap" id="visualizer-wrap">
+      <canvas id="visualizer-canvas"></canvas>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <span>AutoDJ-Extreme v2.0</span>
+    <span class="footer-dot">&#x2022;</span>
+    <span>Powered by Icecast + Liquidsoap + Bun</span>
+  </footer>
+
+  <script src="/public.js"></script>
+</body>
 </html>

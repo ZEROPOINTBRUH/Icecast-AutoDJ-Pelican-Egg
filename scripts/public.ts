@@ -300,7 +300,12 @@ Bun.serve({
     }
 
     // Serve static files from ./public
-    const filePath = `./public${url.pathname === '/' ? '/index.html' : url.pathname}`;
+    // Route / to index.html (public listener page), /admin to player.html (admin command center)
+    let servePath = url.pathname;
+    if (servePath === '/') servePath = '/index.html';
+    else if (servePath === '/admin') servePath = '/player.html';
+
+    const filePath = `./public${servePath}`;
     try {
       const file = Bun.file(filePath);
       const body = await file.arrayBuffer();
@@ -309,24 +314,13 @@ Bun.serve({
       else if (filePath.endsWith('.css')) headers['Content-Type'] = 'text/css';
       else if (filePath.endsWith('.js')) headers['Content-Type'] = 'application/javascript';
       else if (filePath.endsWith('.wasm')) headers['Content-Type'] = 'application/wasm';
+      else if (filePath.endsWith('.svg')) headers['Content-Type'] = 'image/svg+xml';
+      else if (filePath.endsWith('.png')) headers['Content-Type'] = 'image/png';
+      else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) headers['Content-Type'] = 'image/jpeg';
       else headers['Content-Type'] = 'application/octet-stream';
-      // allow CORS for static assets too
       Object.assign(headers, { 'Access-Control-Allow-Origin': '*' });
       return new Response(body, { headers });
     } catch (e) {
-      // If not found, try serving player.html at '/player' and admin UI at '/admin'
-      if (url.pathname === '/' || url.pathname === '/player') {
-        try {
-          const f = Bun.file('./public/player.html');
-          return new Response(await f.arrayBuffer(), { headers: { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' } });
-        } catch (er) {}
-      }
-      if (url.pathname === '/admin' || url.pathname === '/index.html') {
-        try {
-          const f2 = Bun.file('./public/index.html');
-          return new Response(await f2.arrayBuffer(), { headers: { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' } });
-        } catch (er) {}
-      }
       return new Response('Not found', { status: 404 });
     }
   }
