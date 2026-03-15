@@ -59,6 +59,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Bun runtime for admin UI service
+RUN HOME=/root curl -fsSL https://bun.sh/install | HOME=/root bash \
+    && cp /root/.bun/bin/bun /usr/local/bin/bun \
+    && chmod +x /usr/local/bin/bun \
+    && rm -rf /root/.bun
+
 # Add cleanup script - removes all old files except music/playlists on reinstall
 COPY docker/cleanup-container.sh /usr/local/bin/cleanup-container.sh
 RUN chmod +x /usr/local/bin/cleanup-container.sh

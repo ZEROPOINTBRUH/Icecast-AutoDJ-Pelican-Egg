@@ -559,6 +559,38 @@ EOF
     log_access "Radio station went live with PIDs: Icecast=$ICECAST_PID, Liquidsoap=$LIQUIDSOAP_PID"
     
     # ═══════════════════════════════════════════════════════════════════════════
+    # ADMIN UI SERVICE - Bun public/admin web interface
+    # ═══════════════════════════════════════════════════════════════════════════
+    BUN_PID=""
+    if command -v bun &>/dev/null && [ -f /home/container/public.ts ]; then
+        # Calculate public port: use PUBLIC_PORT env or default to Icecast port + 1
+        ADMIN_PORT="${PUBLIC_PORT:-$((SERVER_PORT + 1))}"
+        export PUBLIC_PORT="$ADMIN_PORT"
+        export AUTODJ_HOST="localhost"
+        export AUTODJ_PORT="$SERVER_PORT"
+        
+        log_info "Starting Bun Admin UI on port ${ADMIN_PORT}..."
+        cd /home/container
+        bun run /home/container/public.ts &
+        BUN_PID=$!
+        sleep 2
+        
+        if kill -0 $BUN_PID 2>/dev/null; then
+            log_success "Bun Admin UI started (PID: $BUN_PID, port: $ADMIN_PORT)"
+            echo -e "${CYAN}${BOLD}  Admin UI: http://${SERVER_IP}:${ADMIN_PORT}/${NC}"
+        else
+            log_warn "Bun Admin UI failed to start (non-critical, radio still running)"
+            BUN_PID=""
+        fi
+    else
+        if ! command -v bun &>/dev/null; then
+            log_warn "Bun not available — Admin UI disabled"
+        elif [ ! -f /home/container/public.ts ]; then
+            log_warn "public.ts not found — Admin UI disabled (re-run install)"
+        fi
+    fi
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # TRACK CHANGE MONITOR - watches Liquidsoap track history log
     # ═══════════════════════════════════════════════════════════════════════════
     touch /home/container/log/track-history.log
@@ -625,7 +657,7 @@ EOF
 }
 
 # Trap signals for graceful shutdown
-trap 'log_info "Shutting down..."; kill $ICECAST_PID $LIQUIDSOAP_PID $TRACK_MONITOR_PID $LISTENER_MONITOR_PID $ICECAST_LOG_MONITOR_PID 2>/dev/null; log_info "Shutdown complete"; exit 0' SIGTERM SIGINT
+trap 'log_info "Shutting down..."; kill $BUN_PID $ICECAST_PID $LIQUIDSOAP_PID $TRACK_MONITOR_PID $LISTENER_MONITOR_PID $ICECAST_LOG_MONITOR_PID 2>/dev/null; log_info "Shutdown complete"; exit 0' SIGTERM SIGINT
 
 # Run main function
 main
