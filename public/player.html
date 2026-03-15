@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#050505"/>
   <title>AutoDJ-Extreme — Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -16,14 +17,15 @@
   <nav class="topbar">
     <div class="topbar-left">
       <div class="logo-mark">
-        <span class="logo-icon">&#9881;</span>
+        <span class="logo-icon">&#127911;</span>
         <span class="logo-text">AUTO<span class="accent">DJ</span></span>
       </div>
       <span class="logo-edition">EXTREME</span>
     </div>
     <div class="topbar-center">
-      <a href="/" class="nav-link">LISTEN</a>
-      <a href="/admin" class="nav-link active">COMMAND CENTER</a>
+      <a href="/" class="nav-link">&#127925; LISTEN</a>
+      <a href="/api" class="nav-link">&#128268; API</a>
+      <a href="/admin" class="nav-link active">&#9881; COMMAND CENTER</a>
     </div>
     <div class="topbar-right">
       <div class="admin-status" id="auth-status">
@@ -160,7 +162,24 @@
       </div>
       <div class="settings-grid">
         <div class="setting-card">
-          <h4>Theme Color</h4>
+          <h4>&#127897; Station Identity</h4>
+          <p>Update station name and description. Changes apply to all users instantly.</p>
+          <div class="setting-field">
+            <label class="field-label" for="setting-station-name">Station Name</label>
+            <input type="text" id="setting-station-name" class="setting-input" placeholder="My Radio Station" maxlength="100"/>
+          </div>
+          <div class="setting-field">
+            <label class="field-label" for="setting-station-desc">Description</label>
+            <input type="text" id="setting-station-desc" class="setting-input" placeholder="The best music 24/7" maxlength="500"/>
+          </div>
+          <div class="setting-field">
+            <label class="field-label" for="setting-station-genre">Genre</label>
+            <input type="text" id="setting-station-genre" class="setting-input" placeholder="Various" maxlength="100"/>
+          </div>
+          <button class="btn-secondary" id="btn-save-station" style="margin-top:8px">Save Station Info</button>
+        </div>
+        <div class="setting-card">
+          <h4>&#127912; Theme Color</h4>
           <p>Customize the accent color for all users.</p>
           <div class="color-picker-row">
             <input type="color" id="accent-color-picker" value="#1db954" class="color-input"/>
@@ -181,20 +200,21 @@
           </div>
         </div>
         <div class="setting-card">
-          <h4>Last.fm Scrobbling</h4>
+          <h4>&#127925; Last.fm Scrobbling</h4>
           <p>Connect your Last.fm account to scrobble tracks.</p>
           <button class="btn-secondary" id="btn-lastfm">Connect Last.fm</button>
         </div>
         <div class="setting-card">
-          <h4>Station Info</h4>
+          <h4>&#128268; Station Info</h4>
           <div class="setting-info">
-            <div><span class="info-label">Server Port</span><span class="info-value" id="info-port">—</span></div>
-            <div><span class="info-label">Admin Port</span><span class="info-value" id="info-admin-port">—</span></div>
-            <div><span class="info-label">Bun Version</span><span class="info-value">Runtime</span></div>
+            <div><span class="info-label">Server Port</span><span class="info-value" id="info-port">&mdash;</span></div>
+            <div><span class="info-label">Admin Port</span><span class="info-value" id="info-admin-port">&mdash;</span></div>
+            <div><span class="info-label">Runtime</span><span class="info-value">Bun + Icecast</span></div>
+            <div><span class="info-label">API Docs</span><a href="/api" class="info-value" style="color:var(--accent);text-decoration:underline">/api</a></div>
           </div>
         </div>
         <div class="setting-card">
-          <h4>Session</h4>
+          <h4>&#128274; Session</h4>
           <p>Authenticated as admin.</p>
           <button class="btn-danger" id="btn-logout">Logout</button>
         </div>

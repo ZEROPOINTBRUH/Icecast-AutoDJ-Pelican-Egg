@@ -53,8 +53,8 @@
     root.style.setProperty('--accent-deep', `rgb(${Math.floor(r*0.7)},${Math.floor(g*0.7)},${Math.floor(b*0.7)})`);
   }
 
-  // Load and apply accent color on page load
-  (async function loadAccentColor() {
+  // Load and apply accent color + station info on page load
+  (async function loadSettings() {
     try {
       const res = await fetch('/api/settings');
       const settings = await res.json();
@@ -65,6 +65,13 @@
         if (picker) picker.value = settings.accentColor;
         if (hexLabel) hexLabel.textContent = settings.accentColor;
       }
+      // Populate station identity fields
+      const nameInput = document.getElementById('setting-station-name');
+      const descInput = document.getElementById('setting-station-desc');
+      const genreInput = document.getElementById('setting-station-genre');
+      if (nameInput && settings.stationName) nameInput.value = settings.stationName;
+      if (descInput && settings.stationDescription) descInput.value = settings.stationDescription;
+      if (genreInput && settings.stationGenre) genreInput.value = settings.stationGenre;
     } catch (e) {}
   })();
 
@@ -403,6 +410,31 @@
         }
       } catch (e) {
         showToast('Error saving color', true);
+      }
+    });
+  }
+
+  /* ─── Station Identity Save ─── */
+  const btnSaveStation = document.getElementById('btn-save-station');
+  if (btnSaveStation) {
+    btnSaveStation.addEventListener('click', async () => {
+      const stationName = (document.getElementById('setting-station-name')?.value || '').trim();
+      const stationDescription = (document.getElementById('setting-station-desc')?.value || '').trim();
+      const stationGenre = (document.getElementById('setting-station-genre')?.value || '').trim();
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stationName, stationDescription, stationGenre }),
+        });
+        const j = await res.json();
+        if (j.ok) {
+          showToast('Station info saved!', true);
+        } else {
+          showToast('Failed to save: ' + (j.error || ''), true);
+        }
+      } catch (e) {
+        showToast('Error saving station info', true);
       }
     });
   }

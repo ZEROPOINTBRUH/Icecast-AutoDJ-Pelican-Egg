@@ -18,6 +18,9 @@ const STATION_DESCRIPTION = process.env.STATION_DESCRIPTION || '';
 const STATION_GENRE = process.env.STATION_GENRE || '';
 const LIQUIDSOAP_TELNET_PORT = 1234;
 const storageBase = './storage';
+
+// In-memory vote store (resets on restart)
+const votes: Map<string, { track: string, voters: Set<string>, ts: number }> = new Map();
 const musicDir = `${storageBase}/music`;
 const playlistsDir = `${storageBase}/playlists`;
 const adsDir = `${storageBase}/ads`;
@@ -36,7 +39,7 @@ async function ensureDirs() {
 }
 
 // Settings persistence
-const DEFAULT_SETTINGS = { accentColor: '#1db954' };
+const DEFAULT_SETTINGS: Record<string, any> = { accentColor: '#1db954', stationName: '', stationDescription: '', stationGenre: '' };
 
 async function loadSettings(): Promise<Record<string, any>> {
   try {
@@ -171,14 +174,30 @@ function liquidsoapCommand(cmd: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const sock = net.createConnection(LIQUIDSOAP_TELNET_PORT, '127.0.0.1', () => {
       sock.write(cmd + '\n');
-      sock.write('quit\n');
+      // Small delay before quit so response comes back
+      setTimeout(() => sock.write('quit\n'), 200);
     });
     let data = '';
     sock.on('data', (chunk: Buffer) => { data += chunk.toString(); });
     sock.on('end', () => resolve(data));
     sock.on('error', (err: Error) => reject(err));
-    sock.setTimeout(3000, () => { sock.destroy(); reject(new Error('timeout')); });
+    sock.setTimeout(5000, () => { sock.destroy(); reject(new Error('timeout')); });
   });
+}
+
+// Try multiple skip commands for different Liquidsoap versions
+async function skipTrack(): Promise<string> {
+  const commands = ['music.skip', 'skip', 'radio.skip'];
+  for (const cmd of commands) {
+    try {
+      const result = await liquidsoapCommand(cmd);
+      if (!result.toLowerCase().includes('error') && !result.toLowerCase().includes('unknown')) {
+        return result;
+      }
+    } catch {}
+  }
+  // Fall back to first command even if it errors
+  return await liquidsoapCommand('music.skip');
 }
 
 // Parse Icecast status JSON into a clean metadata object
@@ -226,6 +245,73 @@ function parseIcecastStatus(raw: any) {
     streamStart: source.stream_start_iso8601 || source.stream_start || '',
     audioInfo: source.audio_info || '',
   };
+}
+
+// Generate API documentation HTML
+function apiDocsHtml(stationName: string): string {
+  return `<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${escapeXml(stationName)} — API</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#050505;color:#e0e0e0;padding:32px;max-width:960px;margin:0 auto}
+h1{font-size:32px;font-weight:800;margin-bottom:8px;color:#fff}
+h1 span{color:#1db954}
+.subtitle{color:#6a6a6a;margin-bottom:40px;font-size:14px}
+.endpoint{background:#111;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:20px 24px;margin-bottom:16px;transition:border-color .2s}
+.endpoint:hover{border-color:rgba(29,185,84,.3)}
+.method{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:1px;margin-right:10px}
+.method.get{background:rgba(29,185,84,.15);color:#1db954}
+.method.post{background:rgba(59,130,246,.15);color:#3b82f6}
+.method.delete{background:rgba(239,68,68,.15);color:#ef4444}
+.path{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#fff}
+.desc{margin-top:8px;font-size:13px;color:#999;line-height:1.5}
+.tag{display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:10px;margin-left:8px}
+.tag.public{background:rgba(29,185,84,.1);color:#1db954}
+.tag.admin{background:rgba(239,68,68,.1);color:#ef4444}
+.section{margin-top:36px;margin-bottom:16px;font-size:11px;font-weight:700;letter-spacing:3px;color:#1db954;text-transform:uppercase}
+.back{display:inline-flex;align-items:center;gap:6px;color:#1db954;font-size:13px;font-weight:600;text-decoration:none;margin-bottom:24px}
+.back:hover{text-decoration:underline}
+.example{margin-top:10px;background:#0a0a0a;border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#b3b3b3;overflow-x:auto}
+</style></head><body>
+<a href="/" class="back">&larr; Back to Station</a>
+<h1>${escapeXml(stationName)} <span>API</span></h1>
+<p class="subtitle">Public REST API for integration with your apps, bots, and overlays.</p>
+
+<div class="section">Stream</div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/stream</span><span class="tag public">PUBLIC</span><div class="desc">Audio stream proxy (same-origin). Connect an audio player directly to this URL.</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/autodj.m3u</span><span class="tag public">PUBLIC</span><div class="desc">Download M3U playlist file for external players (VLC, foobar2000, etc).</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/autodj.xspf</span><span class="tag public">PUBLIC</span><div class="desc">Download XSPF playlist file.</div></div>
+
+<div class="section">Metadata</div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/metadata</span><span class="tag public">PUBLIC</span><div class="desc">Current track metadata: title, artist, album, genre, bitrate, listeners, artwork URL.</div><div class="example">{ "title": "...", "artist": "...", "album": "...", "listeners": 5, "artworkUrl": "/api/artwork?..." }</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/config</span><span class="tag public">PUBLIC</span><div class="desc">Station configuration: name, description, genre, stream URLs, accent color.</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/settings</span><span class="tag public">PUBLIC</span><div class="desc">Public settings (accent color, station name overrides).</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/artwork?artist=X&amp;title=Y</span><span class="tag public">PUBLIC</span><div class="desc">Album artwork image (cached from iTunes). Returns JPEG or 204 if not found.</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/status/json</span><span class="tag public">PUBLIC</span><div class="desc">Raw Icecast status JSON (/status-json.xsl proxy).</div></div>
+
+<div class="section">Voting</div>
+<div class="endpoint"><span class="method post">POST</span><span class="path">/api/vote</span><span class="tag public">PUBLIC</span><div class="desc">Vote for a track. Body: <code>{ "track": "Song Name" }</code>. One vote per IP per track.</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/votes</span><span class="tag public">PUBLIC</span><div class="desc">Get top voted tracks, sorted by vote count.</div></div>
+
+<div class="section">Library</div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/tracks</span><span class="tag public">PUBLIC</span><div class="desc">List all tracks in the music library.</div></div>
+<div class="endpoint"><span class="method post">POST</span><span class="path">/api/tracks</span><span class="tag admin">ADMIN</span><div class="desc">Upload a track. FormData with <code>file</code> field.</div></div>
+<div class="endpoint"><span class="method delete">DELETE</span><span class="path">/api/tracks/:name</span><span class="tag admin">ADMIN</span><div class="desc">Delete a track by filename.</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/playlists</span><span class="tag public">PUBLIC</span><div class="desc">List all playlists.</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/ads</span><span class="tag public">PUBLIC</span><div class="desc">List all ad spots.</div></div>
+
+<div class="section">Admin Controls</div>
+<div class="endpoint"><span class="method post">POST</span><span class="path">/api/admin/login</span><span class="tag public">PUBLIC</span><div class="desc">Authenticate. Body: <code>{ "password": "..." }</code>. Returns token.</div></div>
+<div class="endpoint"><span class="method post">POST</span><span class="path">/api/skip</span><span class="tag admin">ADMIN</span><div class="desc">Skip current track (Liquidsoap telnet).</div></div>
+<div class="endpoint"><span class="method post">POST</span><span class="path">/api/settings</span><span class="tag admin">ADMIN</span><div class="desc">Update settings. Body: <code>{ "accentColor": "#hex", "stationName": "...", "stationDescription": "..." }</code></div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/liquidsoap/remaining</span><span class="tag public">PUBLIC</span><div class="desc">Remaining time of current track.</div></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/api/liquidsoap/commands</span><span class="tag admin">ADMIN</span><div class="desc">List available Liquidsoap telnet commands.</div></div>
+
+<div style="margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#444">
+Admin endpoints require <code>Authorization: Bearer &lt;token&gt;</code> header. &bull; AutoDJ-Extreme v2.0
+</div></body></html>`;
 }
 
 await ensureDirs();
@@ -280,9 +366,9 @@ Bun.serve({
       const directStreamUrl = `http://${SERVER_IP}:${ICECAST_PORT}/autodj`;
       const settings = await loadSettings();
       return jsonResponse({
-        stationName: STATION_NAME,
-        stationDescription: STATION_DESCRIPTION,
-        stationGenre: STATION_GENRE,
+        stationName: settings.stationName || STATION_NAME,
+        stationDescription: settings.stationDescription || STATION_DESCRIPTION,
+        stationGenre: settings.stationGenre || STATION_GENRE,
         streamUrl: '/stream',
         directStreamUrl,
         icecastHost: SERVER_IP,
@@ -305,7 +391,13 @@ Bun.serve({
         if (body.accentColor && !/^#[0-9a-fA-F]{6}$/.test(body.accentColor)) {
           return jsonResponse({ error: 'Invalid color format. Use #RRGGBB' }, 400);
         }
-        const saved = await saveSettings(body);
+        // Only allow known settings keys
+        const allowed: Record<string, any> = {};
+        if (body.accentColor) allowed.accentColor = body.accentColor;
+        if (typeof body.stationName === 'string') allowed.stationName = body.stationName.slice(0, 100);
+        if (typeof body.stationDescription === 'string') allowed.stationDescription = body.stationDescription.slice(0, 500);
+        if (typeof body.stationGenre === 'string') allowed.stationGenre = body.stationGenre.slice(0, 100);
+        const saved = await saveSettings(allowed);
         return jsonResponse({ ok: true, settings: saved });
       } catch (e) {
         return jsonResponse({ error: String(e) }, 500);
@@ -360,11 +452,62 @@ Bun.serve({
     if (url.pathname === '/api/skip' && req.method === 'POST') {
       if (!requireAdmin(req)) return new Response('Unauthorized', { status: 401 });
       try {
-        const result = await liquidsoapCommand('music.skip');
+        const result = await skipTrack();
         return jsonResponse({ ok: true, result: result.trim() });
       } catch (e) {
         return jsonResponse({ error: 'Liquidsoap telnet failed: ' + String(e) }, 502);
       }
+    }
+
+    // Liquidsoap info - list available commands
+    if (url.pathname === '/api/liquidsoap/commands' && req.method === 'GET') {
+      if (!requireAdmin(req)) return new Response('Unauthorized', { status: 401 });
+      try {
+        const result = await liquidsoapCommand('help');
+        return jsonResponse({ ok: true, commands: result.trim() });
+      } catch (e) {
+        return jsonResponse({ error: String(e) }, 502);
+      }
+    }
+
+    // Liquidsoap remaining time
+    if (url.pathname === '/api/liquidsoap/remaining' && req.method === 'GET') {
+      try {
+        const result = await liquidsoapCommand('music.remaining');
+        return jsonResponse({ ok: true, remaining: result.trim() });
+      } catch (e) {
+        return jsonResponse({ remaining: 'unknown' });
+      }
+    }
+
+    // Vote system
+    if (url.pathname === '/api/vote' && req.method === 'POST') {
+      try {
+        const body = await req.json();
+        const track = body.track;
+        if (!track || typeof track !== 'string') return jsonResponse({ error: 'track required' }, 400);
+        const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+        if (!votes.has(track)) {
+          votes.set(track, { track, voters: new Set(), ts: Date.now() });
+        }
+        const entry = votes.get(track)!;
+        if (entry.voters.has(clientIp)) {
+          return jsonResponse({ error: 'Already voted for this track', votes: entry.voters.size });
+        }
+        entry.voters.add(clientIp);
+        return jsonResponse({ ok: true, track, votes: entry.voters.size });
+      } catch (e) {
+        return jsonResponse({ error: String(e) }, 500);
+      }
+    }
+
+    if (url.pathname === '/api/votes' && req.method === 'GET') {
+      const result: { track: string; votes: number }[] = [];
+      for (const [, entry] of votes) {
+        result.push({ track: entry.track, votes: entry.voters.size });
+      }
+      result.sort((a, b) => b.votes - a.votes);
+      return jsonResponse(result.slice(0, 20));
     }
 
     // M3U playlist download
@@ -541,6 +684,15 @@ Bun.serve({
         const resp = await lastfmApi('track.scrobble', { sk: session.key, 'artist[0]': artist, 'track[0]': track, 'timestamp[0]': String(timestamp || Math.floor(Date.now()/1000)) });
         return jsonResponse(resp);
       } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+    }
+
+    // API Documentation page
+    if (url.pathname === '/api' || url.pathname === '/api/') {
+      const settings = await loadSettings();
+      const stationName = settings.stationName || STATION_NAME;
+      return new Response(apiDocsHtml(stationName), {
+        headers: { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' },
+      });
     }
 
     // Serve static files from ./public

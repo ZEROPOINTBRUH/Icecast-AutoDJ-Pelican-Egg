@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#050505"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <title>AutoDJ-Extreme</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -22,19 +25,20 @@
   <nav class="topbar">
     <div class="topbar-left">
       <div class="logo-mark">
-        <span class="logo-icon">&#9881;</span>
+        <span class="logo-icon">&#127911;</span>
         <span class="logo-text" id="station-name">AUTO<span class="accent">DJ</span></span>
       </div>
       <span class="logo-edition">EXTREME</span>
     </div>
     <div class="topbar-center">
-      <a href="/" class="nav-link active">LISTEN</a>
-      <a href="/admin" class="nav-link">COMMAND CENTER</a>
+      <a href="/" class="nav-link active">&#127925; LISTEN</a>
+      <a href="/api" class="nav-link">&#128268; API</a>
+      <a href="/admin" class="nav-link">&#9881; COMMAND CENTER</a>
     </div>
     <div class="topbar-right">
       <div class="listener-badge" id="listener-count">
         <span class="pulse-dot"></span>
-        <span id="listeners-num">—</span> LIVE
+        <span id="listeners-num">&mdash;</span> LIVE
       </div>
     </div>
   </nav>
@@ -50,6 +54,9 @@
             <span class="eq-bars"><span></span><span></span><span></span><span></span><span></span></span>
             NOW PLAYING
           </div>
+          <button class="btn-fullscreen" id="btn-fullscreen" title="Fullscreen Player">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
         </div>
         <div class="np-body">
           <div class="np-art" id="album-art">
@@ -59,7 +66,7 @@
           </div>
           <div class="np-info">
             <h1 class="np-title" id="track-title">Waiting for stream...</h1>
-            <p class="np-artist" id="track-artist">—</p>
+            <p class="np-artist" id="track-artist">&mdash;</p>
             <p class="np-album" id="track-album"></p>
             <div class="np-meta">
               <span class="np-tag" id="np-bitrate">128kbps</span>
@@ -123,6 +130,17 @@
         </div>
       </div>
 
+      <!-- Vote for Next Track -->
+      <div class="vote-panel" id="vote-panel">
+        <div class="panel-header">
+          <h3>&#128499; VOTE NEXT</h3>
+          <span class="panel-badge">LIVE</span>
+        </div>
+        <div id="vote-list" class="vote-list">
+          <div class="recent-empty">Loading tracks...</div>
+        </div>
+      </div>
+
       <!-- Recent Tracks -->
       <div class="recent-panel">
         <div class="panel-header">
@@ -141,11 +159,46 @@
     </div>
   </main>
 
+  <!-- ═══════════════════ FULLSCREEN PLAYER ═══════════════════ -->
+  <div id="fullscreen-player" class="fs-player hidden">
+    <div class="fs-bg" id="fs-bg"></div>
+    <div class="fs-content">
+      <button class="fs-close" id="fs-close" title="Exit Fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="fs-artwork" id="fs-artwork">
+        <div class="np-art-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+      </div>
+      <div class="fs-meta">
+        <div class="fs-title" id="fs-title">Waiting for stream...</div>
+        <div class="fs-artist" id="fs-artist">&mdash;</div>
+        <div class="fs-album" id="fs-album"></div>
+      </div>
+      <div class="fs-controls">
+        <button class="fs-play-btn" id="fs-btn-play" aria-label="Play">
+          <svg id="fs-icon-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          <svg id="fs-icon-pause" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <div class="fs-volume-wrap">
+          <svg class="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <input type="range" id="fs-volume" min="0" max="100" value="75" class="vol-slider"/>
+        </div>
+      </div>
+      <div class="fs-info">
+        <span class="fs-listeners"><span class="pulse-dot"></span> <span id="fs-listeners">0</span> listening</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="site-footer">
     <span>AutoDJ-Extreme v2.0</span>
     <span class="footer-dot">&#x2022;</span>
     <span>Powered by Icecast + Liquidsoap + Bun</span>
+    <span class="footer-dot">&#x2022;</span>
+    <a href="/api" style="color:var(--accent);text-decoration:none;font-weight:600">API</a>
   </footer>
 
   <script src="/public.js"></script>
