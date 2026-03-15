@@ -59,11 +59,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Bun runtime for admin UI service
-RUN HOME=/root curl -fsSL https://bun.sh/install | HOME=/root bash \
-    && cp /root/.bun/bin/bun /usr/local/bin/bun \
+# Install Bun runtime (baseline build for CPUs without AVX2) for admin UI service
+RUN curl -fsSL https://github.com/oven-sh/bun/releases/latest/download/bun-linux-x64-baseline.zip -o /tmp/bun.zip \
+    && unzip /tmp/bun.zip -d /tmp/bun \
+    && mv /tmp/bun/bun-linux-x64-baseline/bun /usr/local/bin/bun \
     && chmod +x /usr/local/bin/bun \
-    && rm -rf /root/.bun
+    && rm -rf /tmp/bun /tmp/bun.zip
 
 # Add cleanup script - removes all old files except music/playlists on reinstall
 COPY docker/cleanup-container.sh /usr/local/bin/cleanup-container.sh
