@@ -1,3 +1,6 @@
+# Stage 1: Get Bun binary from official image (handles CPU compatibility)
+FROM --platform=$TARGETOS/$TARGETARCH oven/bun:latest AS bun-stage
+
 FROM ubuntu:24.04
 
 LABEL description="Enhanced Icecast AutoDJ Radio Server with multi-playlist, ads, and jingle support"
@@ -59,12 +62,9 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Bun runtime (baseline build for CPUs without AVX2) for admin UI service
-RUN curl -fsSL https://github.com/oven-sh/bun/releases/latest/download/bun-linux-x64-baseline.zip -o /tmp/bun.zip \
-    && unzip /tmp/bun.zip -d /tmp/bun \
-    && mv /tmp/bun/bun-linux-x64-baseline/bun /usr/local/bin/bun \
-    && chmod +x /usr/local/bin/bun \
-    && rm -rf /tmp/bun /tmp/bun.zip
+# Copy Bun binary from official image
+COPY --from=bun-stage /usr/local/bin/bun /usr/local/bin/bun
+RUN chmod +x /usr/local/bin/bun
 
 # Add cleanup script - removes all old files except music/playlists on reinstall
 COPY docker/cleanup-container.sh /usr/local/bin/cleanup-container.sh
