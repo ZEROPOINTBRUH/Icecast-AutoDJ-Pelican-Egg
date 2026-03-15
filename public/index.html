@@ -23,7 +23,7 @@
     <div class="topbar-left">
       <div class="logo-mark">
         <span class="logo-icon">&#9881;</span>
-        <span class="logo-text">AUTO<span class="accent">DJ</span></span>
+        <span class="logo-text" id="station-name">AUTO<span class="accent">DJ</span></span>
       </div>
       <span class="logo-edition">EXTREME</span>
     </div>
@@ -60,10 +60,11 @@
           <div class="np-info">
             <h1 class="np-title" id="track-title">Waiting for stream...</h1>
             <p class="np-artist" id="track-artist">—</p>
+            <p class="np-album" id="track-album"></p>
             <div class="np-meta">
               <span class="np-tag" id="np-bitrate">128kbps</span>
               <span class="np-tag" id="np-format">MP3</span>
-              <span class="np-tag" id="np-mount">/autodj</span>
+              <span class="np-tag" id="np-genre"></span>
             </div>
           </div>
         </div>
@@ -78,7 +79,27 @@
             <svg class="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
             <input type="range" id="volume" min="0" max="100" value="75" class="vol-slider"/>
           </div>
-          <audio id="audio-player" preload="none"></audio>
+          <audio id="audio-player" crossorigin="anonymous" preload="none"></audio>
+        </div>
+
+        <!-- Share & Download Row -->
+        <div class="action-row">
+          <button class="action-btn" id="btn-share" title="Share link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>Share</span>
+          </button>
+          <button class="action-btn" id="btn-vlc" title="Direct stream URL (VLC/media player)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>Direct URL</span>
+          </button>
+          <a class="action-btn" id="btn-m3u" href="/autodj.m3u" download title="Download M3U playlist">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>M3U</span>
+          </a>
+          <a class="action-btn" id="btn-xspf" href="/autodj.xspf" download title="Download XSPF playlist">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>XSPF</span>
+          </a>
         </div>
       </div>
 

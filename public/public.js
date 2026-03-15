@@ -4,6 +4,29 @@
 (() => {
   'use strict';
 
+  /* ─── Station Config (loaded from API) ─── */
+  let stationConfig = null;
+
+  async function loadConfig() {
+    try {
+      const res = await fetch('/api/config');
+      stationConfig = await res.json();
+      // Set station name in navbar
+      const nameEl = document.getElementById('station-name');
+      if (nameEl && stationConfig.stationName) {
+        nameEl.textContent = stationConfig.stationName;
+      }
+      document.title = stationConfig.stationName || 'AutoDJ-Extreme';
+    } catch (e) { /* use defaults */ }
+  }
+
+  function getStreamUrl() {
+    if (stationConfig && stationConfig.streamUrl) return stationConfig.streamUrl;
+    // Fallback: Icecast on port - 1
+    const port = parseInt(location.port, 10) - 1;
+    return `http://${location.hostname}:${port}/autodj`;
+  }
+
   /* ─── Background Canvas ─── */
   const bgCanvas = document.getElementById('bg-canvas');
   if (bgCanvas) {
@@ -13,7 +36,6 @@
     resize();
     window.addEventListener('resize', resize);
 
-    // Grid of subtle moving lines + nebula
     const lines = [];
     for (let i = 0; i < 40; i++) {
       lines.push({
@@ -28,11 +50,10 @@
       });
     }
 
-    function drawBg(t) {
+    function drawBg() {
       ctx.fillStyle = '#050505';
       ctx.fillRect(0, 0, w, h);
 
-      // Nebula glow
       const grd = ctx.createRadialGradient(w * 0.3, h * 0.4, 0, w * 0.3, h * 0.4, w * 0.6);
       grd.addColorStop(0, 'rgba(29,185,84,0.025)');
       grd.addColorStop(0.5, 'rgba(29,185,84,0.008)');
@@ -40,14 +61,12 @@
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, w, h);
 
-      // Second glow
       const grd2 = ctx.createRadialGradient(w * 0.7, h * 0.6, 0, w * 0.7, h * 0.6, w * 0.5);
       grd2.addColorStop(0, 'rgba(29,185,84,0.015)');
       grd2.addColorStop(1, 'transparent');
       ctx.fillStyle = grd2;
       ctx.fillRect(0, 0, w, h);
 
-      // Tactical grid lines
       for (const l of lines) {
         l.x += l.vx;
         l.y += l.vy;
@@ -96,28 +115,32 @@
   const volSlider = document.getElementById('volume');
   let isPlaying = false;
 
-  // Stream through the Bun proxy — browser only needs to reach this server's port
-  function getStreamUrl() {
-    return '/stream';
-  }
-
   if (playBtn) {
     playBtn.addEventListener('click', () => {
       if (isPlaying) {
-        audio.pause();
-        audio.src = '';
-        isPlaying = false;
-        iconPlay.classList.remove('hidden');
-        iconPause.classList.add('hidden');
+        stopPlayback();
       } else {
-        audio.src = getStreamUrl();
-        audio.volume = (volSlider ? volSlider.value : 75) / 100;
-        audio.play().catch(() => {});
-        isPlaying = true;
-        iconPlay.classList.add('hidden');
-        iconPause.classList.remove('hidden');
+        startPlayback();
       }
     });
+  }
+
+  function startPlayback() {
+    audio.src = getStreamUrl();
+    audio.volume = (volSlider ? volSlider.value : 75) / 100;
+    audio.play().catch(() => {});
+    isPlaying = true;
+    iconPlay.classList.add('hidden');
+    iconPause.classList.remove('hidden');
+  }
+
+  function stopPlayback() {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load(); // release the network connection
+    isPlaying = false;
+    iconPlay.classList.remove('hidden');
+    iconPause.classList.add('hidden');
   }
 
   if (volSlider) {
@@ -125,6 +148,16 @@
       audio.volume = volSlider.value / 100;
     });
   }
+
+  /* ─── Session Cleanup — stop stream when user leaves ─── */
+  window.addEventListener('beforeunload', () => {
+    if (isPlaying) stopPlayback();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    // Don't auto-disconnect on tab switch — user may be multitasking
+    // But DO disconnect if the page is hidden for a long time (handled by browser gc)
+  });
 
   /* ─── Audio Visualizer ─── */
   const vizCanvas = document.getElementById('visualizer-canvas');
@@ -165,14 +198,12 @@
         const barH = val * h * 0.9;
         const x = i * barW;
 
-        // Gradient bar
         const grd = ctx.createLinearGradient(x, h, x, h - barH);
         grd.addColorStop(0, `rgba(29,185,84,${0.3 + val * 0.7})`);
         grd.addColorStop(1, `rgba(29,215,96,${0.1 + val * 0.4})`);
         ctx.fillStyle = grd;
         ctx.fillRect(x, h - barH, barW - 1, barH);
 
-        // Reflection
         ctx.fillStyle = `rgba(29,185,84,${val * 0.08})`;
         ctx.fillRect(x, h, barW - 1, barH * 0.15);
       }
@@ -180,7 +211,6 @@
     draw();
   }
 
-  // Init visualizer on first play
   if (audio) {
     audio.addEventListener('play', () => { initVisualizer(); });
   }
@@ -189,7 +219,7 @@
   if (vizCanvas) {
     const ctx = vizCanvas.getContext('2d');
     function drawIdle() {
-      if (audioCtx) return; // real visualizer running
+      if (audioCtx) return;
       const w = vizCanvas.width = vizCanvas.parentElement.clientWidth;
       const h = vizCanvas.height = vizCanvas.parentElement.clientHeight;
       ctx.fillStyle = '#111111';
@@ -209,56 +239,76 @@
     drawIdle();
   }
 
-  /* ─── Status Polling ─── */
+  /* ─── Status Polling (Rich Metadata) ─── */
   const titleEl = document.getElementById('track-title');
   const artistEl = document.getElementById('track-artist');
+  const albumEl = document.getElementById('track-album');
   const listenersNumEl = document.getElementById('listeners-num');
   const statListeners = document.getElementById('stat-listeners');
   const statPeak = document.getElementById('stat-peak');
   const statUptime = document.getElementById('stat-uptime');
   const statTracks = document.getElementById('stat-tracks');
   const recentList = document.getElementById('recent-list');
+  const npBitrate = document.getElementById('np-bitrate');
+  const npFormat = document.getElementById('np-format');
+  const npGenre = document.getElementById('np-genre');
 
   let peakListeners = 0;
   const trackHistory = [];
 
   async function pollStatus() {
     try {
-      const res = await fetch('/api/status/json');
-      const data = await res.json();
+      const res = await fetch('/api/metadata');
+      const m = await res.json();
+      if (m.error) return;
 
-      // Navigate the Icecast JSON structure
-      const icestats = data.icestats || data;
-      const source = icestats.source || (icestats.sources && icestats.sources[0]) || {};
-
-      // Now playing
-      const title = source.title || source.yp_currently_playing || '';
-      const artist = source.artist || '';
+      // Title / Artist / Album
+      const title = m.title || '';
+      const artist = m.artist || '';
+      const album = m.album || '';
       if (titleEl) titleEl.textContent = title || 'Waiting for stream...';
       if (artistEl) artistEl.textContent = artist || '—';
+      if (albumEl) albumEl.textContent = album || '';
+
+      // Bitrate / format / genre tags
+      if (npBitrate && m.bitrate) npBitrate.textContent = m.bitrate + 'kbps';
+      if (npFormat && m.contentType) {
+        const fmt = m.contentType.includes('mpeg') ? 'MP3' : m.contentType.includes('ogg') ? 'OGG' : m.contentType.includes('aac') ? 'AAC' : m.contentType.split('/').pop().toUpperCase();
+        npFormat.textContent = fmt;
+      }
+      if (npGenre) npGenre.textContent = m.genre || '';
 
       // Listeners
-      const listeners = parseInt(source.listeners || source.listener_count || '0', 10);
+      const listeners = m.listeners || 0;
       if (listenersNumEl) listenersNumEl.textContent = listeners;
       if (statListeners) statListeners.textContent = listeners;
+      if (m.listenerPeak > peakListeners) peakListeners = m.listenerPeak;
       if (listeners > peakListeners) peakListeners = listeners;
       if (statPeak) statPeak.textContent = peakListeners;
 
-      // Track count (from API)
-      try {
-        const tracksRes = await fetch('/api/tracks');
-        const tracks = await tracksRes.json();
-        if (statTracks) statTracks.textContent = Array.isArray(tracks) ? tracks.length : 0;
-      } catch (e) {}
+      // Uptime from stream start
+      if (statUptime && m.streamStart) {
+        const startMs = new Date(m.streamStart).getTime();
+        if (!isNaN(startMs)) {
+          streamStartTime = startMs;
+        }
+      }
 
-      // Update history
+      // Track history
       const trackKey = `${artist}-${title}`;
       if (title && (!trackHistory.length || trackHistory[0].key !== trackKey)) {
-        trackHistory.unshift({ key: trackKey, title: title || 'Unknown', artist: artist || 'Unknown', time: new Date() });
+        trackHistory.unshift({ key: trackKey, title: title || 'Unknown', artist: artist || 'Unknown', album, time: new Date() });
         if (trackHistory.length > 20) trackHistory.pop();
         renderHistory();
       }
     } catch (e) { /* status unavailable */ }
+
+    // Track count
+    try {
+      const tracksRes = await fetch('/api/tracks');
+      const tracks = await tracksRes.json();
+      if (statTracks) statTracks.textContent = Array.isArray(tracks) ? tracks.length : 0;
+    } catch (e) {}
   }
 
   function renderHistory() {
@@ -272,7 +322,7 @@
         <div class="recent-item-num">${i + 1}</div>
         <div class="recent-item-info">
           <div class="recent-item-title">${escHtml(t.title)}</div>
-          <div class="recent-item-artist">${escHtml(t.artist)}</div>
+          <div class="recent-item-artist">${escHtml(t.artist)}${t.album ? ' &middot; ' + escHtml(t.album) : ''}</div>
         </div>
         <div class="recent-item-time">${t.time.toLocaleTimeString()}</div>
       </div>
@@ -285,11 +335,11 @@
     return d.innerHTML;
   }
 
-  // Uptime counter
-  const startTime = Date.now();
+  // Uptime counter (uses stream start if available)
+  let streamStartTime = Date.now();
   function updateUptime() {
     if (!statUptime) return;
-    const s = Math.floor((Date.now() - startTime) / 1000);
+    const s = Math.floor((Date.now() - streamStartTime) / 1000);
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
@@ -298,8 +348,49 @@
       : `${m}:${String(sec).padStart(2,'0')}`;
   }
 
-  // Init
-  pollStatus();
-  setInterval(pollStatus, 8000);
-  setInterval(updateUptime, 1000);
+  /* ─── Share / VLC / Download Buttons ─── */
+  const btnShare = document.getElementById('btn-share');
+  const btnVlc = document.getElementById('btn-vlc');
+
+  if (btnShare) {
+    btnShare.addEventListener('click', () => {
+      const url = location.href;
+      if (navigator.share) {
+        navigator.share({ title: stationConfig?.stationName || 'AutoDJ-Extreme', url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(url).then(() => {
+          showNotification('Link copied to clipboard!');
+        }).catch(() => {
+          prompt('Copy this link:', url);
+        });
+      }
+    });
+  }
+
+  if (btnVlc) {
+    btnVlc.addEventListener('click', () => {
+      const streamUrl = getStreamUrl();
+      navigator.clipboard.writeText(streamUrl).then(() => {
+        showNotification('Stream URL copied! Paste in VLC or any media player.');
+      }).catch(() => {
+        prompt('Copy this stream URL for VLC:', streamUrl);
+      });
+    });
+  }
+
+  function showNotification(msg) {
+    const n = document.createElement('div');
+    n.className = 'toast-notification';
+    n.textContent = msg;
+    document.body.appendChild(n);
+    setTimeout(() => { n.classList.add('show'); }, 10);
+    setTimeout(() => { n.classList.remove('show'); setTimeout(() => n.remove(), 300); }, 2500);
+  }
+
+  /* ─── Init ─── */
+  loadConfig().then(() => {
+    pollStatus();
+    setInterval(pollStatus, 8000);
+    setInterval(updateUptime, 1000);
+  });
 })();

@@ -57,6 +57,25 @@
 
   <!-- ═══════════════════ ADMIN DASHBOARD ═══════════════════ -->
   <main id="admin-dashboard" class="admin-dashboard hidden">
+    <!-- Now Playing / Skip Control -->
+    <div class="admin-now-playing">
+      <div class="admin-np-info">
+        <div class="admin-np-status">
+          <span class="eq-bars"><span></span><span></span><span></span><span></span><span></span></span>
+          NOW PLAYING
+        </div>
+        <div class="admin-np-title" id="admin-track-title">—</div>
+        <div class="admin-np-artist" id="admin-track-artist">—</div>
+      </div>
+      <div class="admin-np-stats">
+        <span class="admin-np-stat"><strong id="admin-listeners">0</strong> listeners</span>
+      </div>
+      <button class="btn-skip" id="btn-skip" title="Skip current track">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8V4z"/><rect x="17" y="4" width="2" height="16"/></svg>
+        SKIP
+      </button>
+    </div>
+
     <!-- Tab Navigation -->
     <div class="admin-tabs">
       <button class="tab-btn active" data-tab="tracks">

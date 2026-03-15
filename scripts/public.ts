@@ -1,15 +1,22 @@
 // @ts-nocheck
 import fs from "fs";
 import crypto from "crypto";
+import net from "net";
 
 const AUTODJ_HOST = process.env.AUTODJ_HOST || "autodj";
 const AUTODJ_PORT = process.env.AUTODJ_PORT || "8000";
 const PUBLIC_PORT = Number(process.env.PUBLIC_PORT || "3000");
+const ICECAST_PORT = process.env.AUTODJ_PORT || "8000";
+const SERVER_IP = process.env.SERVER_IP || process.env.INTERNAL_IP || "localhost";
 
 const AUTODJ_STATUS_URL = `http://${AUTODJ_HOST}:${AUTODJ_PORT}/status-json.xsl`;
 const LASTFM_API_KEY = process.env.LASTFM_API_KEY || '';
 const LASTFM_API_SECRET = process.env.LASTFM_API_SECRET || '';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'changeme';
+const STATION_NAME = process.env.STATION_NAME || 'AutoDJ-Extreme';
+const STATION_DESCRIPTION = process.env.STATION_DESCRIPTION || '';
+const STATION_GENRE = process.env.STATION_GENRE || '';
+const LIQUIDSOAP_TELNET_PORT = 1234;
 const storageBase = './storage';
 const musicDir = `${storageBase}/music`;
 const playlistsDir = `${storageBase}/playlists`;
@@ -61,6 +68,10 @@ function md5(s: string) {
   return crypto.createHash('md5').update(s, 'utf8').digest('hex');
 }
 
+function escapeXml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 async function lastfmApi(method: string, params: Record<string,string>) {
   // build signed request for POST to Last.fm
   const base: Record<string,string> = { api_key: LASTFM_API_KEY, format: 'json', method };
@@ -97,6 +108,68 @@ async function saveUploadedFile(file: File | Blob, destPath: string) {
   await fsp.writeFile(destPath, Buffer.from(ab));
 }
 
+// Send a command to Liquidsoap via telnet
+function liquidsoapCommand(cmd: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const sock = net.createConnection(LIQUIDSOAP_TELNET_PORT, '127.0.0.1', () => {
+      sock.write(cmd + '\n');
+      sock.write('quit\n');
+    });
+    let data = '';
+    sock.on('data', (chunk: Buffer) => { data += chunk.toString(); });
+    sock.on('end', () => resolve(data));
+    sock.on('error', (err: Error) => reject(err));
+    sock.setTimeout(3000, () => { sock.destroy(); reject(new Error('timeout')); });
+  });
+}
+
+// Parse Icecast status JSON into a clean metadata object
+function parseIcecastStatus(raw: any) {
+  const icestats = raw?.icestats || raw || {};
+  let source = icestats.source;
+  // source could be an array (multiple mounts) or a single object
+  if (Array.isArray(source)) source = source[0];
+  if (!source) source = {};
+
+  // Icecast sends "Artist - Title" in the title field (from Liquidsoap metadata)
+  let artist = source.artist || '';
+  let title = source.title || '';
+
+  // If title contains " - ", split into artist/title
+  if (!artist && title && title.includes(' - ')) {
+    const parts = title.split(' - ');
+    artist = parts[0].trim();
+    title = parts.slice(1).join(' - ').trim();
+  }
+
+  // Fallback to yp_currently_playing
+  if (!title && source.yp_currently_playing) {
+    title = source.yp_currently_playing;
+  }
+
+  // Fallback: use server_name or nothing
+  if (!title) title = '';
+  if (!artist) artist = '';
+
+  return {
+    title,
+    artist,
+    album: source.album || '',
+    genre: source.genre || STATION_GENRE,
+    bitrate: source.audio_bitrate || source.ice_bitrate || source.bitrate || '',
+    samplerate: source.samplerate || '',
+    channels: source.channels || '',
+    contentType: source.server_type || source['content-type'] || '',
+    listeners: parseInt(source.listeners || '0', 10),
+    listenerPeak: parseInt(source.listener_peak || '0', 10),
+    serverName: source.server_name || STATION_NAME,
+    serverDescription: source.server_description || STATION_DESCRIPTION,
+    listenUrl: source.listenurl || '',
+    streamStart: source.stream_start_iso8601 || source.stream_start || '',
+    audioInfo: source.audio_info || '',
+  };
+}
+
 await ensureDirs();
 
 Bun.serve({
@@ -124,29 +197,76 @@ Bun.serve({
       }
     }
 
-    // Stream proxy — lets the browser stream audio through this server (single origin)
-    if (url.pathname === '/stream') {
-      const streamUrl = `http://${AUTODJ_HOST}:${AUTODJ_PORT}/autodj`;
+    // Station config — provides stream URL, station info to frontends
+    if (url.pathname === '/api/config') {
+      const streamUrl = `http://${SERVER_IP}:${ICECAST_PORT}/autodj`;
+      return jsonResponse({
+        stationName: STATION_NAME,
+        stationDescription: STATION_DESCRIPTION,
+        stationGenre: STATION_GENRE,
+        streamUrl,
+        icecastHost: SERVER_IP,
+        icecastPort: Number(ICECAST_PORT),
+        mount: '/autodj',
+      });
+    }
+
+    // Rich metadata from Icecast status
+    if (url.pathname === '/api/metadata') {
       try {
-        const upstream = await fetch(streamUrl, {
-          headers: { 'User-Agent': 'AutoDJ-Proxy/1.0', 'Icy-MetaData': '1' },
-        });
-        const headers: Record<string, string> = {
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'no-cache',
-          'X-Content-Type-Options': 'nosniff',
-        };
-        const ct = upstream.headers.get('content-type');
-        if (ct) headers['Content-Type'] = ct;
-        const iceHeaders = ['icy-name','icy-description','icy-genre','icy-br','icy-metaint'];
-        for (const h of iceHeaders) {
-          const v = upstream.headers.get(h);
-          if (v) headers[h] = v;
-        }
-        return new Response(upstream.body, { status: upstream.status, headers });
+        const res = await fetch(AUTODJ_STATUS_URL);
+        const raw = JSON.parse(await res.text());
+        const metadata = parseIcecastStatus(raw);
+        return jsonResponse(metadata);
       } catch (e) {
-        return new Response('Stream unavailable', { status: 502 });
+        return jsonResponse({ error: String(e) }, 502);
       }
+    }
+
+    // Skip current track (admin only) — sends skip command to Liquidsoap via telnet
+    if (url.pathname === '/api/skip' && req.method === 'POST') {
+      if (!requireAdmin(req)) return new Response('Unauthorized', { status: 401 });
+      try {
+        const result = await liquidsoapCommand('music.skip');
+        return jsonResponse({ ok: true, result: result.trim() });
+      } catch (e) {
+        return jsonResponse({ error: 'Liquidsoap telnet failed: ' + String(e) }, 502);
+      }
+    }
+
+    // M3U playlist download
+    if (url.pathname === '/autodj.m3u') {
+      const streamUrl = `http://${SERVER_IP}:${ICECAST_PORT}/autodj`;
+      const m3u = `#EXTM3U\n#EXTINF:-1,${STATION_NAME}\n${streamUrl}\n`;
+      return new Response(m3u, {
+        headers: {
+          'Content-Type': 'audio/x-mpegurl',
+          'Content-Disposition': 'attachment; filename="autodj.m3u"',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
+    // XSPF playlist download
+    if (url.pathname === '/autodj.xspf') {
+      const streamUrl = `http://${SERVER_IP}:${ICECAST_PORT}/autodj`;
+      const xspf = `<?xml version="1.0" encoding="UTF-8"?>
+<playlist version="1" xmlns="http://xspf.org/ns/0/">
+  <title>${escapeXml(STATION_NAME)}</title>
+  <trackList>
+    <track>
+      <title>${escapeXml(STATION_NAME)}</title>
+      <location>${escapeXml(streamUrl)}</location>
+    </track>
+  </trackList>
+</playlist>`;
+      return new Response(xspf, {
+        headers: {
+          'Content-Type': 'application/xspf+xml',
+          'Content-Disposition': 'attachment; filename="autodj.xspf"',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
     if (url.pathname === '/api/tracks' && req.method === 'GET') {

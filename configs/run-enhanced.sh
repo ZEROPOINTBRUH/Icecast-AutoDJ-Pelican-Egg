@@ -479,22 +479,28 @@ main() {
 set("log.file.path", "/home/container/log/liquidsoap.log")
 set("log.level", 3)
 
+# Enable telnet server for remote control (skip, metadata, etc.)
+set("server.telnet", true)
+set("server.telnet.bind_addr", "127.0.0.1")
+set("server.telnet.port", 1234)
+
 music = playlist("/home/container/playlist.m3u")
 
 # Log track changes to a dedicated file for the monitor to pick up
 def on_track_change(m) =
   title = m["title"]
   artist = m["artist"]
+  album = m["album"]
   filename = m["filename"]
-  log("NOW PLAYING: #{artist} - #{title} [#{filename}]")
-  system("echo \"\$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{filename}]\" >> /home/container/log/track-history.log")
+  log("NOW PLAYING: #{artist} - #{title} [#{album}] (#{filename})")
+  system("echo \"\$(date '+%Y-%m-%d %H:%M:%S') NOW PLAYING: #{artist} - #{title} [#{album}] (#{filename})\" >> /home/container/log/track-history.log")
 end
 
 # Apply safety wrapper and register track change callback
 radio = mksafe(music)
 radio.on_track(on_track_change)
 
-output.icecast(%mp3(bitrate=${ICECAST_STREAM_BITRATE}), host="localhost", port=${ICECAST_STREAM_PORT}, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", radio)
+output.icecast(%mp3(bitrate=${ICECAST_STREAM_BITRATE}), host="localhost", port=${ICECAST_STREAM_PORT}, password="${ICECAST_SOURCE_PASSWORD}", mount="autodj", name="${STATION_NAME:-Enhanced AutoDJ Radio}", description="${STATION_DESCRIPTION:-}", genre="${STATION_GENRE:-}", radio)
 EOF
     
     log_success "Liquidsoap config generated (port: ${ICECAST_STREAM_PORT}, bitrate: ${ICECAST_STREAM_BITRATE}kbps)"
@@ -572,6 +578,11 @@ EOF
         export PUBLIC_PORT="$ADMIN_PORT"
         export AUTODJ_HOST="localhost"
         export AUTODJ_PORT="$SERVER_PORT"
+        export STATION_NAME="${STATION_NAME:-Enhanced AutoDJ Radio}"
+        export STATION_DESCRIPTION="${STATION_DESCRIPTION:-}"
+        export STATION_GENRE="${STATION_GENRE:-}"
+        export SERVER_IP="${SERVER_IP:-localhost}"
+        export ADMIN_KEY="${ADMIN_KEY:-changeme}"
         
         log_info "Starting Bun Admin UI on port ${ADMIN_PORT}..."
         cd /home/container

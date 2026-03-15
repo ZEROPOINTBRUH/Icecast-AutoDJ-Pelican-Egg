@@ -311,4 +311,50 @@
     });
   }
 
+  /* ─── Skip Button ─── */
+  const btnSkip = document.getElementById('btn-skip');
+  if (btnSkip) {
+    btnSkip.addEventListener('click', async () => {
+      btnSkip.disabled = true;
+      btnSkip.textContent = 'SKIPPING...';
+      try {
+        const res = await fetch('/api/skip', {
+          method: 'POST',
+          headers: authHeaders(),
+        });
+        const j = await res.json();
+        if (j.ok) {
+          showToast('Track skipped!', true);
+        } else {
+          showToast('Skip failed: ' + (j.error || 'unknown error'), true);
+        }
+      } catch (e) {
+        showToast('Skip error: ' + e.message, true);
+      }
+      btnSkip.disabled = false;
+      btnSkip.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8V4z"/><rect x="17" y="4" width="2" height="16"/></svg> SKIP';
+    });
+  }
+
+  /* ─── Admin Metadata Polling ─── */
+  const adminTitle = document.getElementById('admin-track-title');
+  const adminArtist = document.getElementById('admin-track-artist');
+  const adminListeners = document.getElementById('admin-listeners');
+
+  async function pollAdminStatus() {
+    try {
+      const res = await fetch('/api/metadata');
+      const m = await res.json();
+      if (m.error) return;
+      if (adminTitle) adminTitle.textContent = m.title || '—';
+      if (adminArtist) adminArtist.textContent = m.artist || '—';
+      if (adminListeners) adminListeners.textContent = m.listeners || 0;
+    } catch (e) {}
+  }
+
+  // Poll while dashboard is visible
+  setInterval(() => {
+    if (!dashboard.classList.contains('hidden')) pollAdminStatus();
+  }, 5000);
+
 })();
