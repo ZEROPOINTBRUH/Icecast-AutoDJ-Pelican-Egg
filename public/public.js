@@ -17,14 +17,60 @@
         nameEl.textContent = stationConfig.stationName;
       }
       document.title = stationConfig.stationName || 'AutoDJ-Extreme';
+      // Apply accent color from settings
+      if (stationConfig.accentColor) {
+        applyAccentColor(stationConfig.accentColor);
+      }
     } catch (e) { /* use defaults */ }
   }
 
   function getStreamUrl() {
-    if (stationConfig && stationConfig.streamUrl) return stationConfig.streamUrl;
-    // Fallback: Icecast on port - 1
+    // Always use the same-origin proxy (avoids CORS issues)
+    return '/stream';
+  }
+
+  function getDirectStreamUrl() {
+    if (stationConfig && stationConfig.directStreamUrl) return stationConfig.directStreamUrl;
     const port = parseInt(location.port, 10) - 1;
     return `http://${location.hostname}:${port}/autodj`;
+  }
+
+  // Apply accent color as CSS custom properties
+  function applyAccentColor(hex) {
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const root = document.documentElement;
+    root.style.setProperty('--accent', hex);
+    // Brighter variant
+    const br = Math.min(255, r + 20);
+    const bg2 = Math.min(255, g + 20);
+    const bb = Math.min(255, b + 20);
+    root.style.setProperty('--accent-bright', `rgb(${br},${bg2},${bb})`);
+    root.style.setProperty('--accent-glow', `rgba(${r},${g},${b},0.3)`);
+    root.style.setProperty('--accent-deep', `rgb(${Math.floor(r*0.7)},${Math.floor(g*0.7)},${Math.floor(b*0.7)})`);
+  }
+
+  // Clipboard helper that works on HTTP (not just HTTPS)
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    // Fallback for non-secure contexts (HTTP)
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+    } catch (e) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
   }
 
   /* ─── Background Canvas ─── */
@@ -270,6 +316,11 @@
       if (artistEl) artistEl.textContent = artist || '—';
       if (albumEl) albumEl.textContent = album || '';
 
+      // Album artwork
+      if (m.artworkUrl && (artist || title)) {
+        loadArtwork(m.artworkUrl);
+      }
+
       // Bitrate / format / genre tags
       if (npBitrate && m.bitrate) npBitrate.textContent = m.bitrate + 'kbps';
       if (npFormat && m.contentType) {
@@ -335,6 +386,28 @@
     return d.innerHTML;
   }
 
+  // Album artwork loader
+  const albumArtEl = document.getElementById('album-art');
+  let currentArtworkUrl = '';
+
+  function loadArtwork(url) {
+    if (url === currentArtworkUrl) return;
+    currentArtworkUrl = url;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      if (albumArtEl) {
+        albumArtEl.innerHTML = '';
+        img.className = 'np-art-img';
+        albumArtEl.appendChild(img);
+      }
+    };
+    img.onerror = () => {
+      // Keep placeholder on error
+    };
+    img.src = url;
+  }
+
   // Uptime counter (uses stream start if available)
   let streamStartTime = Date.now();
   function updateUptime() {
@@ -358,10 +431,8 @@
       if (navigator.share) {
         navigator.share({ title: stationConfig?.stationName || 'AutoDJ-Extreme', url }).catch(() => {});
       } else {
-        navigator.clipboard.writeText(url).then(() => {
+        copyText(url).then(() => {
           showNotification('Link copied to clipboard!');
-        }).catch(() => {
-          prompt('Copy this link:', url);
         });
       }
     });
@@ -369,11 +440,9 @@
 
   if (btnVlc) {
     btnVlc.addEventListener('click', () => {
-      const streamUrl = getStreamUrl();
-      navigator.clipboard.writeText(streamUrl).then(() => {
+      const directUrl = getDirectStreamUrl();
+      copyText(directUrl).then(() => {
         showNotification('Stream URL copied! Paste in VLC or any media player.');
-      }).catch(() => {
-        prompt('Copy this stream URL for VLC:', streamUrl);
       });
     });
   }

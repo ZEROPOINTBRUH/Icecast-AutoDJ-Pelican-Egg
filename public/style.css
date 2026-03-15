@@ -954,6 +954,14 @@ input { font-family: var(--font); }
   height: 16px;
 }
 
+/* ═══ ALBUM ARTWORK IMAGE ═══ */
+.np-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
 /* ═══ ALBUM TEXT ═══ */
 .np-album {
   font-size: 13px;
@@ -1064,6 +1072,50 @@ input { font-family: var(--font); }
 .btn-skip svg {
   width: 18px;
   height: 18px;
+}
+
+/* ═══ COLOR PICKER ═══ */
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.color-input {
+  width: 48px;
+  height: 36px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  padding: 2px;
+}
+.color-input::-webkit-color-swatch-wrapper { padding: 0; }
+.color-input::-webkit-color-swatch { border: none; border-radius: 4px; }
+.color-hex {
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--text-secondary);
+  min-width: 70px;
+}
+.color-presets {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.color-preset {
+  width: 32px;
+  height: 32px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.color-preset:hover {
+  border-color: var(--text);
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(255,255,255,0.2);
 }
 
 /* ═══ RESPONSIVE ═══ */

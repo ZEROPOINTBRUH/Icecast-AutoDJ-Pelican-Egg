@@ -40,6 +40,34 @@
     return d.innerHTML;
   }
 
+  // Apply accent color as CSS custom properties
+  function applyAccentColor(hex) {
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const root = document.documentElement;
+    root.style.setProperty('--accent', hex);
+    root.style.setProperty('--accent-bright', `rgb(${Math.min(255,r+20)},${Math.min(255,g+20)},${Math.min(255,b+20)})`);
+    root.style.setProperty('--accent-glow', `rgba(${r},${g},${b},0.3)`);
+    root.style.setProperty('--accent-deep', `rgb(${Math.floor(r*0.7)},${Math.floor(g*0.7)},${Math.floor(b*0.7)})`);
+  }
+
+  // Load and apply accent color on page load
+  (async function loadAccentColor() {
+    try {
+      const res = await fetch('/api/settings');
+      const settings = await res.json();
+      if (settings.accentColor) {
+        applyAccentColor(settings.accentColor);
+        const picker = document.getElementById('accent-color-picker');
+        const hexLabel = document.getElementById('accent-color-hex');
+        if (picker) picker.value = settings.accentColor;
+        if (hexLabel) hexLabel.textContent = settings.accentColor;
+      }
+    } catch (e) {}
+  })();
+
   /* ─── Auth Gate ─── */
   const authGate = document.getElementById('auth-gate');
   const dashboard = document.getElementById('admin-dashboard');
@@ -333,6 +361,49 @@
       }
       btnSkip.disabled = false;
       btnSkip.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8V4z"/><rect x="17" y="4" width="2" height="16"/></svg> SKIP';
+    });
+  }
+
+  /* ─── Color Picker ─── */
+  const colorPicker = document.getElementById('accent-color-picker');
+  const colorHex = document.getElementById('accent-color-hex');
+  const btnSaveColor = document.getElementById('btn-save-color');
+
+  if (colorPicker && colorHex) {
+    colorPicker.addEventListener('input', () => {
+      colorHex.textContent = colorPicker.value;
+      applyAccentColor(colorPicker.value);
+    });
+  }
+
+  // Preset color buttons
+  document.querySelectorAll('.color-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const color = btn.dataset.color;
+      if (colorPicker) colorPicker.value = color;
+      if (colorHex) colorHex.textContent = color;
+      applyAccentColor(color);
+    });
+  });
+
+  if (btnSaveColor) {
+    btnSaveColor.addEventListener('click', async () => {
+      const color = colorPicker ? colorPicker.value : '#1db954';
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accentColor: color }),
+        });
+        const j = await res.json();
+        if (j.ok) {
+          showToast(`Theme color saved: ${color}`, true);
+        } else {
+          showToast('Failed to save color: ' + (j.error || ''), true);
+        }
+      } catch (e) {
+        showToast('Error saving color', true);
+      }
     });
   }
 

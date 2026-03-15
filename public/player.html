@@ -160,6 +160,27 @@
       </div>
       <div class="settings-grid">
         <div class="setting-card">
+          <h4>Theme Color</h4>
+          <p>Customize the accent color for all users.</p>
+          <div class="color-picker-row">
+            <input type="color" id="accent-color-picker" value="#1db954" class="color-input"/>
+            <span class="color-hex" id="accent-color-hex">#1db954</span>
+            <button class="btn-secondary" id="btn-save-color">Save Color</button>
+          </div>
+          <div class="color-presets">
+            <button class="color-preset" data-color="#1db954" style="background:#1db954" title="Spotify Green"></button>
+            <button class="color-preset" data-color="#e91e63" style="background:#e91e63" title="Pink"></button>
+            <button class="color-preset" data-color="#9c27b0" style="background:#9c27b0" title="Purple"></button>
+            <button class="color-preset" data-color="#2196f3" style="background:#2196f3" title="Blue"></button>
+            <button class="color-preset" data-color="#00bcd4" style="background:#00bcd4" title="Cyan"></button>
+            <button class="color-preset" data-color="#ff9800" style="background:#ff9800" title="Orange"></button>
+            <button class="color-preset" data-color="#f44336" style="background:#f44336" title="Red"></button>
+            <button class="color-preset" data-color="#ffeb3b" style="background:#ffeb3b" title="Yellow"></button>
+            <button class="color-preset" data-color="#4caf50" style="background:#4caf50" title="Green"></button>
+            <button class="color-preset" data-color="#ff5722" style="background:#ff5722" title="Deep Orange"></button>
+          </div>
+        </div>
+        <div class="setting-card">
           <h4>Last.fm Scrobbling</h4>
           <p>Connect your Last.fm account to scrobble tracks.</p>
           <button class="btn-secondary" id="btn-lastfm">Connect Last.fm</button>

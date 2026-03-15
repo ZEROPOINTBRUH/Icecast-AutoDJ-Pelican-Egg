@@ -21,6 +21,8 @@ const storageBase = './storage';
 const musicDir = `${storageBase}/music`;
 const playlistsDir = `${storageBase}/playlists`;
 const adsDir = `${storageBase}/ads`;
+const artworkDir = `${storageBase}/artwork`;
+const settingsFile = `${storageBase}/settings.json`;
 
 const fsp = fs.promises;
 
@@ -29,7 +31,63 @@ async function ensureDirs() {
     fsp.mkdir(musicDir, { recursive: true }),
     fsp.mkdir(playlistsDir, { recursive: true }),
     fsp.mkdir(adsDir, { recursive: true }),
+    fsp.mkdir(artworkDir, { recursive: true }),
   ]);
+}
+
+// Settings persistence
+const DEFAULT_SETTINGS = { accentColor: '#1db954' };
+
+async function loadSettings(): Promise<Record<string, any>> {
+  try {
+    const raw = await fsp.readFile(settingsFile, 'utf8');
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+async function saveSettings(data: Record<string, any>) {
+  const current = await loadSettings();
+  const merged = { ...current, ...data };
+  await fsp.writeFile(settingsFile, JSON.stringify(merged, null, 2));
+  return merged;
+}
+
+// Artwork cache — fetch from iTunes Search API
+async function fetchArtwork(artist: string, title: string): Promise<string | null> {
+  if (!artist && !title) return null;
+  const cacheKey = md5(`${artist}-${title}`);
+  const cachePath = `${artworkDir}/${cacheKey}.jpg`;
+
+  // Check cache first
+  try {
+    await fsp.access(cachePath);
+    return cachePath;
+  } catch {}
+
+  // Fetch from iTunes
+  try {
+    const query = encodeURIComponent(`${artist} ${title}`.trim());
+    const itunesUrl = `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`;
+    const res = await fetch(itunesUrl);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      let artUrl = data.results[0].artworkUrl100 || '';
+      // Upscale to 600x600
+      artUrl = artUrl.replace('100x100bb', '600x600bb');
+      if (artUrl) {
+        const imgRes = await fetch(artUrl);
+        const imgBuf = Buffer.from(await imgRes.arrayBuffer());
+        await fsp.writeFile(cachePath, imgBuf);
+        return cachePath;
+      }
+    }
+  } catch {}
+
+  // Write empty marker so we don't re-fetch
+  try { await fsp.writeFile(`${artworkDir}/${cacheKey}.miss`, ''); } catch {}
+  return null;
 }
 
 function jsonResponse(data: any, status = 200) {
@@ -197,18 +255,89 @@ Bun.serve({
       }
     }
 
+    // Stream proxy — each request creates a new Icecast fetch (multi-listener safe)
+    if (url.pathname === '/stream') {
+      const streamUrl = `http://${AUTODJ_HOST}:${AUTODJ_PORT}/autodj`;
+      try {
+        const upstream = await fetch(streamUrl, {
+          headers: { 'User-Agent': 'AutoDJ-Proxy/1.0', 'Icy-MetaData': '0' },
+        });
+        const headers: Record<string, string> = {
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache, no-store',
+          'X-Content-Type-Options': 'nosniff',
+        };
+        const ct = upstream.headers.get('content-type');
+        if (ct) headers['Content-Type'] = ct;
+        return new Response(upstream.body, { status: 200, headers });
+      } catch (e) {
+        return new Response('Stream unavailable', { status: 502 });
+      }
+    }
+
     // Station config — provides stream URL, station info to frontends
     if (url.pathname === '/api/config') {
-      const streamUrl = `http://${SERVER_IP}:${ICECAST_PORT}/autodj`;
+      const directStreamUrl = `http://${SERVER_IP}:${ICECAST_PORT}/autodj`;
+      const settings = await loadSettings();
       return jsonResponse({
         stationName: STATION_NAME,
         stationDescription: STATION_DESCRIPTION,
         stationGenre: STATION_GENRE,
-        streamUrl,
+        streamUrl: '/stream',
+        directStreamUrl,
         icecastHost: SERVER_IP,
         icecastPort: Number(ICECAST_PORT),
         mount: '/autodj',
+        accentColor: settings.accentColor || '#1db954',
       });
+    }
+
+    // Settings — GET public, POST admin-only
+    if (url.pathname === '/api/settings' && req.method === 'GET') {
+      const settings = await loadSettings();
+      return jsonResponse(settings);
+    }
+    if (url.pathname === '/api/settings' && req.method === 'POST') {
+      if (!requireAdmin(req)) return new Response('Unauthorized', { status: 401 });
+      try {
+        const body = await req.json();
+        // Validate accent color if provided
+        if (body.accentColor && !/^#[0-9a-fA-F]{6}$/.test(body.accentColor)) {
+          return jsonResponse({ error: 'Invalid color format. Use #RRGGBB' }, 400);
+        }
+        const saved = await saveSettings(body);
+        return jsonResponse({ ok: true, settings: saved });
+      } catch (e) {
+        return jsonResponse({ error: String(e) }, 500);
+      }
+    }
+
+    // Album artwork — cached from iTunes Search API
+    if (url.pathname === '/api/artwork') {
+      const artist = url.searchParams.get('artist') || '';
+      const title = url.searchParams.get('title') || '';
+      const cacheKey = md5(`${artist}-${title}`);
+
+      // Check for miss marker
+      try {
+        await fsp.access(`${artworkDir}/${cacheKey}.miss`);
+        return new Response(null, { status: 204 });
+      } catch {}
+
+      const cached = await fetchArtwork(artist, title);
+      if (cached) {
+        try {
+          const imgData = await fsp.readFile(cached);
+          return new Response(imgData, {
+            headers: {
+              'Content-Type': 'image/jpeg',
+              'Cache-Control': 'public, max-age=86400',
+              'Access-Control-Allow-Origin': '*',
+            },
+          });
+        } catch {}
+      }
+      return new Response(null, { status: 204 });
     }
 
     // Rich metadata from Icecast status
@@ -217,6 +346,10 @@ Bun.serve({
         const res = await fetch(AUTODJ_STATUS_URL);
         const raw = JSON.parse(await res.text());
         const metadata = parseIcecastStatus(raw);
+        // Include artwork URL if we have artist/title
+        if (metadata.artist || metadata.title) {
+          metadata.artworkUrl = `/api/artwork?artist=${encodeURIComponent(metadata.artist)}&title=${encodeURIComponent(metadata.title)}`;
+        }
         return jsonResponse(metadata);
       } catch (e) {
         return jsonResponse({ error: String(e) }, 502);
